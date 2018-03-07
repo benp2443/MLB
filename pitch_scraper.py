@@ -313,6 +313,74 @@ def individual_game(url):
 					mt = ''
 
 
+def game_info(url_):
+
+	url = url_
+	driver.get(url)
+	soup = BeautifulSoup(driver.page_source, 'xml')
+
+	game = soup.find('game')
+
+	game_attributes = game.attrs
+
+	if 'type' in game_attributes:
+		season_period = game['type']
+
+	else:
+		season_period = 'null'
+
+
+	for team in game.find_all('team'):
+
+		team_attributes = team.attrs
+
+		if 'type' in team_attributes:
+
+			if 'name_brief' in team_attributes:
+
+				if team['type'] == 'home':
+					home = team['name_brief']
+
+					if 'league' in team_attributes:
+						league_home = team['league']
+
+					else:
+						league_home = 'Unknown'
+
+				else:
+					away = team['name_brief']
+
+					if 'league' in team_attributes:
+						league_away = team['league']
+					
+					else:
+						league_away = team['league']
+				
+	# Need to add to part above to account for names ect not being there
+
+	stadium_ = game.find('stadium')
+
+	stadium_attributes = stadium_.attrs
+
+	if 'name' in stadium_attributes:
+		stadium = stadium_['name']
+
+	else:
+		stadium = 'Unknown'
+
+	if 'location' in stadium_attributes:
+		location = stadium_['location']
+
+	else:
+		location = 'Unknown'
+	
+	period = season_period
+	info = [season_period, home, league_home, away, league_away, stadium, location]
+
+	return period, info
+
+
+
 					
 url = 'https://gd2.mlb.com/components/game/mlb/year_2017/month_07/day_05'
 
@@ -330,10 +398,17 @@ for links in soup.find('ul'):
 for game in games:
 
 	try:
-		url_ = url + '/' + game + 'inning/inning_all.xml'
-		individual_game(url_)
+		game_info_url = url + '/' + game + 'game.xml'
+		period, info = game_info(game_info_url)
+
+		if period != 'S':
+			print(period)
+			pitch_info_url = url + '/' + game + 'inning/inning_all.xml'
+			individual_game(pitch_info_url)
+		else:
+			continue
 	except:
-		print('{} game did not work'.format(game)) ##Need a print to console if any links do not work
+		print('{} game did not work'.format(game)) ##Need to update this try except so it shows which link was broken!
 		
 
 
