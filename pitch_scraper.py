@@ -9,20 +9,20 @@ def individual_game(url):
 	driver.get(url)
 	soup = BeautifulSoup(driver.page_source, 'xml')
 
-	home_away = soup.find('inning')
-
-	if 'home_team' in home_away.attrs:
-		home_team = home_away['home_team']
-	else:
-		home_team = ''
-
-	if 'away_team' in home_away.attrs:
-		away_team = home_away['away_team']
-	else:
-		away_team = ''
-	
-	print('Home team: {0}, Away team: {1}'.format(home_team, away_team))
-	sys.stdout.flush()
+#	home_away = soup.find('inning')
+#
+#	if 'home_team' in home_away.attrs:
+#		home_team = home_away['home_team']
+#	else:
+#		home_team = ''
+#
+#	if 'away_team' in home_away.attrs:
+#		away_team = home_away['away_team']
+#	else:
+#		away_team = ''
+#	
+#	print('Home team: {0}, Away team: {1}'.format(home_team, away_team))
+#	sys.stdout.flush()
 	
 	for individual_innings in soup.find_all('inning'):
 		
@@ -33,12 +33,14 @@ def individual_game(url):
 
 		for atbat in individual_innings.find_all('atbat'):
 
+			ab_info = [inning]
+
 			atbat_atts = atbat.attrs
 
 			if 'num' in atbat_atts:
-				num = atbat['num']
+				ab_game_num = atbat['num']
 			else:
-				num = ''
+				ab_game_num = ''
 
 			if 'b' in atbat_atts:
 				balls = atbat['b']
@@ -113,7 +115,12 @@ def individual_game(url):
 			else:
 				away_runs = ''
 
+			ab_info += [inning, ab_game_num, balls, strikes, ab_start_date_time, ab_end_date_time, batter_id, \
+				   b_handedness, pitcher_id, p_handedness, ab_event_number, ab_event, outs, home_runs, away_runs]
+
 			for pitch in atbat.find_all('pitch'):
+
+				pitch_info = ab_info
 
 				pitch_attributes = pitch.attrs
 
@@ -212,35 +219,35 @@ def individual_game(url):
 				else:
 					pz = ''
 
-				if 'x0' in pitch_attributes: #Note, the variables are done with the letter O not the number
-					xO = pitch['x0']
+				if 'x0' in pitch_attributes:
+					x0 = pitch['x0']
 				else:
-					xO = ''
+					x0 = ''
 
 				if 'y0' in pitch_attributes:
-					yO = pitch['y0']
+					y0 = pitch['y0']
 				else:
-					yO = ''
+					y0 = ''
 
 				if 'z0' in pitch_attributes:
-					zO = pitch['z0']
+					z0 = pitch['z0']
 				else:
-					zO = ''
+					z0 = ''
 
 				if 'vx0' in pitch_attributes:
-					vxO = pitch['vx0']
+					vx0 = pitch['vx0']
 				else:
-					vxO = ''
+					vx0 = ''
 
 				if 'vy0' in pitch_attributes:
-					vyO = pitch['vy0']
+					vy0 = pitch['vy0']
 				else:
-					vyO = ''
+					vy0 = ''
 
 				if 'vz0' in pitch_attributes:
-					vzO = pitch['vz0']
+					vz0 = pitch['vz0']
 				else:
-					vzO = ''
+					vz0 = ''
 
 				if 'ax' in pitch_attributes:
 					ax = pitch['ax']
@@ -312,8 +319,16 @@ def individual_game(url):
 				else:
 					mt = ''
 
-
-def game_info(url_):
+					
+				 
+				pitch_info += [p_decription, id_, type_, code, p_time, x, y, event_num, start_speed, end_speed, on_first, \
+					        on_second, on_third, sz_top, sz_bot, pfx_x, pfx_z, px, pz, x0, y0, z0, vx0, vy0, vz0, ax, ay \
+						az, break_y, break_angle, break_length, pitch_type, type_confidence, zone, nasty, spin_dir, \
+						spin_rate, cc, mtid_, type_, code, p_time, x, y, event_num, start_speed, end_speed, on_first, \
+						on_second, on_third, sz_top, sz_bot, pfx_x, pfx_z, px, pz, x0, y0, z0, vx0, vy0, vz0, ax, ay \
+						az, break_y, break_angle, break_length, pitch_type, type_confidence, zone, nasty, spin_dir, \
+						spin_rate, cc, mt]
+	def game_info(url_):
 
 	url = url_
 	driver.get(url)
