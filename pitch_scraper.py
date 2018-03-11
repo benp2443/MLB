@@ -1,28 +1,20 @@
+import pandas as pd
+import numpy as np
 from bs4 import BeautifulSoup
 from selenium import webdriver
 import sys
 
 driver = webdriver.PhantomJS(executable_path = r'C:\Users\benpa\Documents\chromedriver\phantomjs-2.1.1-windows\bin\phantomjs.exe')
 
-def individual_game(url):
+def individual_game(url, game_info_list):
 
 	driver.get(url)
 	soup = BeautifulSoup(driver.page_source, 'xml')
+	data = []
 
-#	home_away = soup.find('inning')
-#
-#	if 'home_team' in home_away.attrs:
-#		home_team = home_away['home_team']
-#	else:
-#		home_team = ''
-#
-#	if 'away_team' in home_away.attrs:
-#		away_team = home_away['away_team']
-#	else:
-#		away_team = ''
-#	
-#	print('Home team: {0}, Away team: {1}'.format(home_team, away_team))
-#	sys.stdout.flush()
+	outs = 0
+	home_runs = 0
+	away_runs = 0
 	
 	for individual_innings in soup.find_all('inning'):
 		
@@ -30,7 +22,8 @@ def individual_game(url):
 			inning = individual_innings['num']
 		else:
 			inning = ''
-
+		
+		 
 		for atbat in individual_innings.find_all('atbat'):
 
 			ab_info = [inning]
@@ -100,27 +93,39 @@ def individual_game(url):
 			# Need to think about correctly assigning outs, home runs and away runs to the right column
 			# ATM being assigned as the outcome of the current atbat
 
-			if 'o' in atbat_atts:
-				outs = atbat['o']
-			else:
-				outs = ''
-
-			if 'home_team_runs' in atbat_atts:
-				home_runs = atbat['home_team_runs']
-			else:
-				home_runs = ''
-
-			if 'away_team_runs' in atbat_atts:
-				away_runs = atbat['away_team_runs']
-			else:
-				away_runs = ''
-
-			ab_info += [inning, ab_game_num, balls, strikes, ab_start_date_time, ab_end_date_time, batter_id, \
+			ab_info += [ab_game_num, balls, strikes, ab_start_date_time, ab_end_date_time, batter_id, \
 				   b_handedness, pitcher_id, p_handedness, ab_event_number, ab_event, outs, home_runs, away_runs]
 
-			for pitch in atbat.find_all('pitch'):
+			if 'o' in atbat_atts:
+				outs = int(atbat['o'])
 
-				pitch_info = ab_info
+				if outs == 3:
+					outs = 0 # Reset for bottom of the inning
+			else:
+				outs = -1
+
+			if 'home_team_runs' in atbat_atts:
+				home_runs = int(atbat['home_team_runs'])
+			else:
+				home_runs = -1
+
+			if 'away_team_runs' in atbat_atts:
+				away_runs = int(atbat['away_team_runs'])
+			else:
+				away_runs = -1
+
+
+			ball_count = 0
+			strike_count = 0
+			pitch_sequence = ''
+
+			for pitch in atbat.find_all('pitch'):
+				
+				pitch_info = []
+
+				ball_ct = ball_count
+				strike_ct = strike_count
+				pitch_sq = pitch_sequence
 
 				pitch_attributes = pitch.attrs
 
@@ -319,19 +324,35 @@ def individual_game(url):
 				else:
 					mt = ''
 
-					
-				 
-				pitch_info += [p_decription, id_, type_, code, p_time, x, y, event_num, start_speed, end_speed, on_first, \
-					        on_second, on_third, sz_top, sz_bot, pfx_x, pfx_z, px, pz, x0, y0, z0, vx0, vy0, vz0, ax, ay \
-						az, break_y, break_angle, break_length, pitch_type, type_confidence, zone, nasty, spin_dir, \
-						spin_rate, cc, mtid_, type_, code, p_time, x, y, event_num, start_speed, end_speed, on_first, \
-						on_second, on_third, sz_top, sz_bot, pfx_x, pfx_z, px, pz, x0, y0, z0, vx0, vy0, vz0, ax, ay \
-						az, break_y, break_angle, break_length, pitch_type, type_confidence, zone, nasty, spin_dir, \
-						spin_rate, cc, mt]
-	def game_info(url_):
+				pitch_info = info + ab_info + [p_description, id_, type_, code, p_time, x, y, event_num, start_speed, end_speed, on_first, \
+					on_second, on_third, sz_top, sz_bot, pfx_x, pfx_z, px, pz, x0, y0, z0, vx0, vy0, vz0, ax, ay, \
+					az, break_y, break_angle, break_length, pitch_type, type_confidence, zone, nasty, spin_dir, \
+					spin_rate, cc, mt, pitch_sequence]
 
-	url = url_
-	driver.get(url)
+				data.append(pitch_info)
+
+				if type_ == 'S' and strike_count < 2:
+					strike_count += 1
+				elif type_ == 'B':
+					ball_count += 1
+
+				pitch_sequence += pitch_type
+					 
+
+	df = pd.DataFrame(data, columns = ['season_period', 'home', 'league_home', 'away', 'league_away', 'stadium', 'location', 'inning', 'ab_game_num', \
+					'balls', 'strikes', 'ab_start_date_time', 'ab_end_date_time', 'batter_id', 'b_handedness', 'pitcher_id', \
+					'p_handedness', 'ab_event_number', 'ab_event', 'outs', 'home_runs', 'away_runs', 'p_description', 'id_', \
+					'type_', 'code', 'p_time', 'x', 'y', 'event_num', 'start_speed', 'end_speed', 'on_first', 'on_second', 'on_third', \
+					'sz_top', 'sz_bot', 'pfx_x', 'pfx_z', 'px', 'pz', 'x0', 'y0', 'z0', 'vx0', 'vy0', 'vz0', 'ax', 'ay', 'az', \
+					'break_y', 'break_angle', 'break_length', 'pitch_type', 'type_confidence', 'zone', 'nasty', 'spin_dir', 'spin_rate', \
+					'cc', 'mt', 'pitch_sequence'])
+	
+	return df
+
+def game_info(url_):
+	
+	print(url_)
+	driver.get(url_)
 	soup = BeautifulSoup(driver.page_source, 'xml')
 
 	game = soup.find('game')
@@ -353,12 +374,13 @@ def individual_game(url):
 
 			if 'name_brief' in team_attributes:
 
+	# Need to fix this chunck of code to better account for it if home or away is not there
+
 				if team['type'] == 'home':
 					home = team['name_brief']
 
 					if 'league' in team_attributes:
 						league_home = team['league']
-
 					else:
 						league_home = 'Unknown'
 
@@ -367,11 +389,9 @@ def individual_game(url):
 
 					if 'league' in team_attributes:
 						league_away = team['league']
-					
 					else:
 						league_away = team['league']
 				
-	# Need to add to part above to account for names ect not being there
 
 	stadium_ = game.find('stadium')
 
@@ -388,7 +408,7 @@ def individual_game(url):
 
 	else:
 		location = 'Unknown'
-	
+
 	period = season_period
 	info = [season_period, home, league_home, away, league_away, stadium, location]
 
@@ -396,46 +416,100 @@ def individual_game(url):
 
 
 
-					
-url = 'https://gd2.mlb.com/components/game/mlb/year_2017/month_07/day_05'
+def links_scraper(url, startswith_string):
 
-driver.get(url)
-soup = BeautifulSoup(driver.page_source, 'lxml')
+	links_list = []
 
-games = []
+	driver.get(url)
+	soup = BeautifulSoup(driver.page_source, 'lxml')
 
-for links in soup.find('ul'):
-	link = links.find('a').text.strip()
+	links = soup.find('ul')
+	
+	for link in links.find_all('li'):
 
-	if link.startswith('gid'):
-		games.append(link)
-
-for game in games:
-
-	try:
-		game_info_url = url + '/' + game + 'game.xml'
-		period, info = game_info(game_info_url)
-
-		if period != 'S':
-			print(period)
-			pitch_info_url = url + '/' + game + 'inning/inning_all.xml'
-			individual_game(pitch_info_url)
+		if startswith_string == 'day':
+			string = link.find('a').text.strip()[0:-1] # cut the '/' at end of string
 		else:
-			continue
-	except:
-		print('{} game did not work'.format(game)) ##Need to update this try except so it shows which link was broken!
+			string = link.find('a').text.strip()
+
+		if string.startswith(startswith_string):
+			if startswith_string.startswith('gid'):
+				links_list.append(url + '/' + string)
+			else:
+				links_list.append(url + string)
+
+	return links_list
+
+
+def game_check(url):
+
+	inning = False
+	game = False
+	driver.get(url)
+	soup = BeautifulSoup(driver.page_source, 'lxml')
+
+	links = soup.find('ul')
+	if links == None:
+		return 'false' 
+
+	for link in links.find_all('li'):
+
+		text = link.find('a').text.strip()
+
+		if text.startswith('inning'):
+			inning = True
+		elif text.startswith('game.xml'):
+			game = True
+
+	if inning == True and game == True:
+		return 'true'
+	else:
+		return 'false'
+
+
+url = 'https://gd2.mlb.com/components/game/mlb/'
+pitch_df = pd.DataFrame()
+years = ['2017']
+
+for year in years:
+
+	url = url + 'year_' + year + '/'
+	gid_link_startswith = 'gid_' + year
+	months_list = links_scraper(url, 'month')
 		
+	for month in months_list:
 
+		days_list = links_scraper(month, 'day')
 
+		for day in days_list:
 
+			games_list = links_scraper(day, gid_link_startswith)
 
+			if len(games_list) > 0:
 
+				for game in games_list:
 
+					actual_game = game_check(game)
 
+					if actual_game == 'true':
 
+						game_info_url = game + 'game.xml'
+						period, info = game_info(game_info_url)
+							
+						if period != 'S':
+							pitch_info_url = url + 'inning/inning_all.xml'
+							df = individual_game(pitch_info_url, info)
 
+							if len(pitch_df) == 0:
+								pitch_df = df
+							else:
+								pitch_df = pd.concat([pitch_df, df], axis = 0)
+						else:
+							continue
+					else:
+						continue
+			else:
+				continue
 
-
-
-
+pitch_df.to_csv('pitch_data.csv', index = False)
 
