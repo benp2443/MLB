@@ -23,11 +23,9 @@ def individual_game(url, game_info_list):
 		else:
 			inning = ''
 		
-		 
 		for atbat in individual_innings.find_all('atbat'):
 
 			ab_info = [inning]
-
 			atbat_atts = atbat.attrs
 
 			if 'num' in atbat_atts:
@@ -89,9 +87,6 @@ def individual_game(url, game_info_list):
 				ab_event_2 = atbat['event2']
 			else:
 				ab_event_2 = ''
-
-			# Need to think about correctly assigning outs, home runs and away runs to the right column
-			# ATM being assigned as the outcome of the current atbat
 
 			ab_info += [ab_game_num, balls, strikes, ab_start_date_time, ab_end_date_time, batter_id, \
 				   b_handedness, pitcher_id, p_handedness, ab_event_number, ab_event, outs, home_runs, away_runs]
@@ -327,7 +322,7 @@ def individual_game(url, game_info_list):
 				pitch_info = info + ab_info + [p_description, id_, type_, code, p_time, x, y, event_num, start_speed, end_speed, on_first, \
 					on_second, on_third, sz_top, sz_bot, pfx_x, pfx_z, px, pz, x0, y0, z0, vx0, vy0, vz0, ax, ay, \
 					az, break_y, break_angle, break_length, pitch_type, type_confidence, zone, nasty, spin_dir, \
-					spin_rate, cc, mt, pitch_sequence]
+					spin_rate, cc, mt, strike_count, ball_count, pitch_sequence]
 
 				data.append(pitch_info)
 
@@ -345,13 +340,12 @@ def individual_game(url, game_info_list):
 					'type_', 'code', 'p_time', 'x', 'y', 'event_num', 'start_speed', 'end_speed', 'on_first', 'on_second', 'on_third', \
 					'sz_top', 'sz_bot', 'pfx_x', 'pfx_z', 'px', 'pz', 'x0', 'y0', 'z0', 'vx0', 'vy0', 'vz0', 'ax', 'ay', 'az', \
 					'break_y', 'break_angle', 'break_length', 'pitch_type', 'type_confidence', 'zone', 'nasty', 'spin_dir', 'spin_rate', \
-					'cc', 'mt', 'pitch_sequence'])
+					'cc', 'mt', 'strike_count', 'ball_count', 'pitch_sequence'])
 	
 	return df
 
 def game_info(url_):
 	
-	print(url_)
 	driver.get(url_)
 	soup = BeautifulSoup(driver.page_source, 'xml')
 
@@ -496,14 +490,16 @@ for year in years:
 						game_info_url = game + 'game.xml'
 						period, info = game_info(game_info_url)
 							
-						if period != 'S':
-							pitch_info_url = url + 'inning/inning_all.xml'
+						if period != 'S' and period != 'E':
+							pitch_info_url = game + 'inning/inning_all.xml'
+							print(pitch_info_url)
 							df = individual_game(pitch_info_url, info)
 
 							if len(pitch_df) == 0:
 								pitch_df = df
 							else:
 								pitch_df = pd.concat([pitch_df, df], axis = 0)
+								print('hello')
 						else:
 							continue
 					else:
