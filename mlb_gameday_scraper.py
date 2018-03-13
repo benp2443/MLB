@@ -507,5 +507,5 @@ for year in years:
 			else:
 				continue
 
-pitch_df.to_csv('pitch_data.csv', index = False)
+pitch_df.to_csv('mlb_gameday.csv', index = False)
 
