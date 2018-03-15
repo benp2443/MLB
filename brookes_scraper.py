@@ -7,7 +7,7 @@ from selenium.webdriver.support.ui import Select, WebDriverWait
 import sys
 import time
 
-def get_pitcher_links():
+def get_pitcher_links() #pitcher_id_list):
         pitcher_tab = driver.find_element_by_name('pitchSel')
         pitchers = pitcher_tab.find_elements_by_tag_name('option')
 
@@ -17,7 +17,10 @@ def get_pitcher_links():
         pitcher_list = []
 
         for pitcher in pitchers:
-                pitcher_list.append(pitcher.get_attribute('value'))
+                pitcher_id = pitcher.get_attribute('value')
+
+                #if pitcher_id in pitch_list:  *********ADD BACK WHEN PITCHERS IN DATA ARE KNOWN**********
+                #        pitcher_list.append(pitcher_id_list)
 
         day_links = []
         for pitcher in pitcher_list:
@@ -66,6 +69,7 @@ years = [2014,2015,2016,2017]
 months = range(3,13) # All month tabs go from March to December
 days = range(1,32) # All day tabs go from 1 to 31
 
+#pitcher_id_list = [] -> List of pitchers id's to scrap. Parsed into pitcher_list function
 links = []
 
 for year in years:
@@ -101,7 +105,7 @@ for year in years:
 
                                 button.click()
 
-                                game_links = get_pitcher_links()
+                                game_links = get_pitcher_links() #(pitcher_id_list):
 
                                 if len(game_links) == 0:
                                         continue
