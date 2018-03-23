@@ -4,7 +4,7 @@ from bs4 import BeautifulSoup
 from selenium import webdriver
 import sys
 
-driver = webdriver.PhantomJS(executable_path = r'C:\Users\benpa\Documents\chromedriver\phantomjs-2.1.1-windows\bin\phantomjs.exe')
+driver = webdriver.PhantomJS(r'/usr/bin/phantomjs')
 
 def individual_game(url, game_info_list, game_link_id):
 
@@ -427,6 +427,8 @@ def links_scraper(url, startswith_string):
 
                 if startswith_string == 'day':
                         string = link.find('a').text.strip()[0:-1] # cut the '/' at end of string
+                        if string.endswith('00'):
+                            continue ## error on website has games repeated in day_00 link
                 else:
                         string = link.find('a').text.strip()
 
@@ -466,7 +468,7 @@ def game_check(url):
 
 url = 'https://gd2.mlb.com/components/game/mlb/'
 pitch_df = pd.DataFrame()
-years = ['2017']
+years = ['2014', '2015', '2016', '2017']
 
 cut_months = ['01/', '02/', '12/']
 
@@ -496,10 +498,9 @@ for year in years:
                                         actual_game = game_check(game)
 
                                         if actual_game == 'true':
-                                                
                                                 game_info_url = game + 'game.xml'
                                                 period, info = game_info(game_info_url)
-                                                        
+                                                                        
                                                 if period != 'S' and period != 'E':
                                                         pitch_info_url = game + 'inning/inning_all.xml'
                                                         df = individual_game(pitch_info_url, info, game)
@@ -515,5 +516,5 @@ for year in years:
                         else:
                                 continue
 
-pitch_df.to_csv('mlb_gameday.csv', index = False)
+pitch_df.to_csv('mlb_gameday_all.csv', index = False)
 
