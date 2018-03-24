@@ -7,7 +7,7 @@ from selenium.webdriver.support.ui import Select, WebDriverWait
 import sys
 import time
 
-def get_pitcher_links(): #pitcher_id_list):
+def get_pitcher_links():
         pitcher_tab = driver.find_element_by_name('pitchSel')
         pitchers = pitcher_tab.find_elements_by_tag_name('option')
 
@@ -19,8 +19,6 @@ def get_pitcher_links(): #pitcher_id_list):
         for pitcher in pitchers:
                 pitcher_id = pitcher.get_attribute('value')
                 pitcher_list.append(pitcher_id)
-                #if pitcher_id in pitch_list:  *********ADD BACK WHEN PITCHERS IN DATA ARE KNOWN**********
-                #        pitcher_list.append(pitcher_id_list)
 
         day_links = []
         for pitcher in pitcher_list:
@@ -40,7 +38,6 @@ def get_pitcher_links(): #pitcher_id_list):
 
         sys.stdout.flush()
         return day_links
-
 
 def game_data(link):
 
@@ -70,11 +67,10 @@ def game_data(link):
 
 driver = webdriver.PhantomJS(r'/usr/bin/phantomjs')
 
-years = [2017]
-months = range(3,4) # All month tabs go from March to December
-days = range(29,32) # All day tabs go from 1 to 31
+years = [2014, 2015, 2016, 2017]
+months = range(3,12) 
+days = range(1,32) # All day tabs go from 1 to 31
 
-#pitcher_id_list = [] -> List of pitchers id's to scrap. Parsed into pitcher_list function
 links = []
 
 for year in years:
@@ -130,4 +126,4 @@ for link in links:
         else:
                 df = pd.concat([df, temp], axis = 0)
 
-df.to_csv('brookes2017.csv', index = False)
+df.to_csv('brookes_all.csv', index = False)

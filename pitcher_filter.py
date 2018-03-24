@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 
-df = pd.read_csv('mlb_gameday.csv')
+df = pd.read_csv('gameday_data/mlb_gameday.csv')
 
 pitchers_list = df['pitcher_id'].unique().tolist()
 print('Number of pitchers: {}'.format(len(pitchers_list)))
@@ -20,7 +20,6 @@ def over_500(pitch_count_column):
 pitcher_count['over_500'] = pitcher_count['pitch_count'].apply(over_500)
 
 final_pitchers = []
-#changed_pitch_freq_pitchers = []
 
 for pitcher in pitchers_list:
     temp = pitcher_count.loc[pitcher_count['pitcher_id'] == pitcher, :]
