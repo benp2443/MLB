@@ -12,18 +12,19 @@ pitch_conf_df.sort_values(by = ['type_confidence'], inplace = True)
 
 bot_10_percent = pitch_conf_df.iloc[0:18, :] # ~ 180 pitchers in data. Hence first 18 rows are in bottome 10 percent
 bot_sample = bot_10_percent.sample(4)
-
+print(bot_sample)
 top_10_percent = pitch_conf_df.iloc[-18:, :]
 top_sample = top_10_percent.sample(4)
+print(top_sample)
 
 # With the sample pitchers, find the mean confidence for each of there pitch types
 pitchers = bot_sample['pitcher_id'].tolist() + top_sample['pitcher_id'].tolist()
 
-temp = df.loc[df['pitcher_id'].isin(pitchers), ['pitcher_id', 'pitch_type', 'type_confidence']]
-conf_by_pitch = temp.groupby(['pitcher_id', 'pitch_type']).mean().reset_index()
+temp = df.loc[df['pitcher_id'].isin(pitchers), ['pitcher_id', 'pitch_type', 'type_confidence', 'pfx_x', 'pfx_z', 'start_speed']]
+conf_by_pitch = temp.groupby(['pitcher_id', 'pitch_type'])['type_confidence'].mean().reset_index()
 
 # Create new df which only includes pitch types which are thrown with more than 5% frequency (individually for each pitcher)
-pitch_counts = temp.groupby(['pitcher_id', 'pitch_type']).count().reset_index()
+pitch_counts = temp.groupby(['pitcher_id', 'pitch_type'])['type_confidence'].count().reset_index()
 pitch_counts.columns = ['pitcher_id', 'pitch_type', 'count']
 
 final = pd.DataFrame()
@@ -43,7 +44,7 @@ for pitcher in pitchers:
 
         i += 1
 
-    temp2 = conf_by_pitch.loc[(conf_by_pitch['pitcher_id'] == pitcher) & (conf_by_pitch['pitch_type'].isin(keep_pitch_types)), :]
+    temp2 = temp.loc[(temp['pitcher_id'] == pitcher) & (temp['pitch_type'].isin(keep_pitch_types)), :]
 
     if len(final) == 0:
         final = temp2
@@ -55,3 +56,4 @@ bot_pitchers = bot_sample['pitcher_id'].drop_duplicates().tolist()
 final['class'] = ['bottom' if x in bot_pitchers else 'top' for x in final['pitcher_id']]
 
 final.to_csv('per_pitch_confidence.csv', index = False)
+
