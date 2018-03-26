@@ -19,12 +19,16 @@ pitch_density <- function(df, id) {
 	return(density_plot)
 }
 
-test <- pitch_density(df, 523260)
-ggsave(filename = 'test.pdf', plot = test)
+pitcher_ids = c(465657, 593372, 543144, 434378)
 
+for (pitcher in pitcher_ids) {
+	test = pitch_density(df, pitcher)
+	name = paste(pitcher, 'density.pdf', sep = '_')
+	ggsave(filename = name, plot = test)
+}
 
-test <- pitch_density(df, 501381)
-ggsave(filename = 'test2.pdf', plot = test)
+#test <- pitch_density(df, 593372)
+#ggsave(filename = '593372_density.pdf', plot = test)
 
 # Pitch visualisation
 df <- read.csv('per_pitch_confidence.csv')
@@ -126,8 +130,10 @@ pitch_viz(df, 434378, '434378.pdf')
 # Test
 df5 <- read.csv('delete.csv')
 
-pitch_viz <- function(df, saveas) {
-	temp <- df %>% 
+pitch_viz <- function(df, id, saveas) {
+	df2 <- subset(df, pitcher_id == id)
+
+	temp <- df2 %>% 
 		group_by(pitch_type) %>%
 		sample_n(100)
 
@@ -141,12 +147,12 @@ pitch_viz <- function(df, saveas) {
 		stat_ellipse() +
 		labs(x = 'Horizontal Movement', y = 'Pitch Speed (MPH)')
 
-	plot_4 <- ggplot(temp, aes(x = pfx_x, y = pfx_z, color = clustered_type)) +
+	plot_4 <- ggplot(temp, aes(x = pfx_x, y = pfx_z, color = cluster)) +
 		geom_point(shape = 1) +
 		stat_ellipse() +
 		labs(x = 'Horizontal Movement', y = 'Vertical Movement')
 
-	plot_5 <- ggplot(temp, aes(x = pfx_x, y = start_speed, color = clustered_type)) +
+	plot_5 <- ggplot(temp, aes(x = pfx_x, y = start_speed, color = cluster)) +
 		geom_point(shape = 1) + 
 		stat_ellipse() +
 		labs(x = 'Horizontal Movement', y = 'Pitch Speed (MPH)')
@@ -155,5 +161,5 @@ pitch_viz <- function(df, saveas) {
 	ggsave(filename = saveas, plot = together)
 }
 
-pitch_viz(df5, 'testrun.pdf')
-
+pitch_viz(df5, 465657, '465657_scatter.pdf')
+pitch_viz(df5, 593372, '593372._scatter.pdf')
