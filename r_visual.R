@@ -15,7 +15,8 @@ df <- read.csv('per_pitch_confidence.csv')
 pitch_density <- function(df, id) {
 	df <- subset(df, pitcher_id == id)
 	density_plot <- ggplot(df, aes(x = type_confidence, color = pitch_type)) + 
-		geom_density() 
+	#	geom_freqpoly(aes(y = ..count../sum(..count..))) 
+		geom_density()
 	return(density_plot)
 }
 
@@ -93,29 +94,32 @@ pitch_viz(df, 434378, '434378.pdf')
 # Side by side
 
 
-#pitch_viz <- function(df, id, saveas) {
-#	df2 <- subset(df, pitcher_id == id)
-#
-#	temp <- df2 %>% 
-#		group_by(pitch_type) %>%
-#		sample_n(100)
-#
-#	plot_1 <- ggplot(temp, aes(x = pfx_x, y = pfx_z, color = pitch_type)) +
-#		geom_point(shape = 1) +
-#		stat_ellipse() +
-#		labs(x = 'Horizontal Movement', y = 'Vertical Movement')
-#
-#	plot_2 <- ggplot(temp, aes(x = pfx_x, y = start_speed, color = pitch_type)) +
-#		geom_point(shape = 1) + 
-#		stat_ellipse() +
-#		labs(x = 'Horizontal Movement', y = 'Pitch Speed (MPH)')
-#
-#	plot_3 <- pitch_density(df, id)
-#
-#	together = grid.arrange(plot_1, plot_2, plot_3, nrow = 2, ncol = 2)
-#	ggsave(filename = saveas, plot = together)
-#}
-#
+pitch_viz <- function(df, id, saveas) {
+	df2 <- subset(df, pitcher_id == id)
+
+	temp <- df2 %>% 
+		group_by(pitch_type) %>%
+		sample_n(100)
+
+	plot_1 <- ggplot(temp, aes(x = pfx_x, y = pfx_z, color = pitch_type)) +
+		geom_point(shape = 1) +
+		stat_ellipse() +
+		labs(x = 'Horizontal Movement', y = 'Vertical Movement')
+
+	plot_2 <- ggplot(temp, aes(x = pfx_x, y = start_speed, color = pitch_type)) +
+		geom_point(shape = 1) + 
+		stat_ellipse() +
+		labs(x = 'Horizontal Movement', y = 'Pitch Speed (MPH)')
+
+	#plot_3 <- pitch_density(df, id)
+
+	together = grid.arrange(plot_1, plot_2, ncol = 2)
+	ggsave(filename = saveas, plot = together)
+}
+
+pitch_viz(df, 543144, '543144_scatter.pdf')
+pitch_viz(df, 434378, '434378_scatter.pdf')
+
 #i = 1
 #while (i < 9) {
 #	if (i < 5) {
@@ -162,4 +166,4 @@ pitch_viz <- function(df, id, saveas) {
 }
 
 pitch_viz(df5, 465657, '465657_scatter.pdf')
-pitch_viz(df5, 593372, '593372._scatter.pdf')
+pitch_viz(df5, 593372, '593372_scatter.pdf')

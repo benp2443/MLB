@@ -54,21 +54,23 @@ test1 = cluster_pitch_types('per_pitch_confidence.csv', 465657)
 print(test1)
 test2 = cluster_pitch_types('per_pitch_confidence.csv', 593372)
 print(test2)
+test3 = cluster_pitch_types('per_pitch_confidence.csv', 434378)
+print(test3)
 
-clusters_465657 = {'FF':'FF/FT/FC', 'FT':'FF/FT/FC', 'FC':'FF/FT/FC', 'CU':'CU', 'SL':'SL', 'CH':'CH'}
-clusters_593372 = {'CH':'CH', 'FF':'FF/FT', 'FT':'FF/FT', 'CU':'CU/SL', 'SL':'CU/SL'}
+#clusters_465657 = {'FF':'FF/FT/FC', 'FT':'FF/FT/FC', 'FC':'FF/FT/FC', 'CU':'CU', 'SL':'SL', 'CH':'CH'}
+#clusters_593372 = {'CH':'CH', 'FF':'FF/FT', 'FT':'FF/FT', 'CU':'CU/SL', 'SL':'CU/SL'}
 
-pitchers = [465657, 593372]
+#pitchers = [465657, 593372]
 
-temp = pd.read_csv('per_pitch_confidence.csv')
-temp1 = temp.loc[temp['pitcher_id'] == pitchers[0], :]
-temp2 = temp.loc[temp['pitcher_id'] == pitchers[1], :]
+#temp = pd.read_csv('per_pitch_confidence.csv')
+#temp1 = temp.loc[temp['pitcher_id'] == pitchers[0], :]
+#temp2 = temp.loc[temp['pitcher_id'] == pitchers[1], :]
 
-temp1['cluster'] = temp1['pitch_type'].map(clusters_465657)
-temp2['cluster'] = temp2['pitch_type'].map(clusters_593372)
+#temp1['cluster'] = temp1['pitch_type'].map(clusters_465657)
+#temp2['cluster'] = temp2['pitch_type'].map(clusters_593372)
 
-final = pd.concat([temp1, temp2], axis = 0)
-print(final.head(10))
-print(final.tail(10))
+#final = pd.concat([temp1, temp2], axis = 0)
+#print(final.head(10))
+#print(final.tail(10))
 
-final.to_csv('delete.csv', index = False)
+#final.to_csv('delete.csv', index = False)

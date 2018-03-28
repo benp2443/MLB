@@ -57,3 +57,5 @@ final['class'] = ['bottom' if x in bot_pitchers else 'top' for x in final['pitch
 
 final.to_csv('per_pitch_confidence.csv', index = False)
 
+
+
