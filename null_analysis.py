@@ -86,44 +86,45 @@ nulls_by_game = nulls_df.groupby(['year', 'game_id'])['home_team'].count().reset
 nulls_by_game.rename(columns = {'home_team':'nulls'}, inplace = True)
 nulls_by_game.to_csv('visualisations/nulls/nulls_by_game.csv', index = False)
 
-## dropping pitchers with too many null pitch_types in a game
-games = nulls_df['game_id'].unique().tolist()
+null_idx = nulls_df.index.values.tolist()
+i = 0
+count = 0
+consec_nulls = []
+while i < len(null_idx) - 1:
+    if null_idx[i+1] - null_idx[i] == 1:
+        count += 1
+    else:
+        consec_nulls.append(count)
+        count = 0
+         
+    i += 1
 
-for game in games:
-    print(game)
-    temp = nulls_df.loc[nulls_df['game_id'] == game, :]
-    pitchers = temp['pitcher_id'].unique().tolist()
-    for pitcher in pitchers:
-        pitcher_df = temp.loc[temp['pitcher_id'] == pitcher, :]
-        pitches_thrown = float(len(pitcher_df))
-        nulls = float(len(pitcher_df.loc[pitcher_df['pitch_type'].isnull(), :]))
-        null_percent = nulls/pitches_thrown
+consec_nulls = pd.DataFrame(consec_nulls, columns = ['consec_nulls'])
+consec_nulls.to_csv('visualisations/nulls/consec_nulls.csv', index = False)
 
-        if null_percent > 0.20:
-            df = df.loc[~((df['game_id'] == game) & (df['pitcher_id'] == pitcher)), :]
-            print(nulls)
-            print(pitches_thrown)
-            print(null_percent)
-        
-
-
-
-#temp = df.loc[df['pitch_type'].isnull(), :]
-#games = temp['game_id'].values.tolist()
-#unique_games = set(games)
-#for game in unique_games:
+### dropping pitchers with too many null pitch_types in a game
+#games = nulls_df['game_id'].unique().tolist()
+#
+#for game in games:
 #    print(game)
+#    temp = nulls_df.loc[nulls_df['game_id'] == game, :]
+#    pitchers = temp['pitcher_id'].unique().tolist()
+#    for pitcher in pitchers:
+#        null_df = temp.loc[temp['pitcher_id'] == pitcher, :]
+#        nulls = float(len(null_df))
 #
-#test = df.loc[~(df['pitch_type'].isnull()), :]
-#for col in columns:
-#    print(col)
-#    print(test[col].isnull().sum(), '\n')
+#        full_df = df.loc[((df['pitcher_id'] == pitcher) & (df['game_id'] == game)), :]
+#        pitches_thrown = float(len(full_df))
 #
-#df['ab_event_num'] = df['ab_event_number'].astype(int)
-#df['event_num'] = df['event_num'].astype(int)
-#df['zone'] = df['zone'].astype(int)
+#        null_percent = nulls/pitches_thrown
 #
-#for col in columns:
-#    print(col)
-#    print(df.loc[0, col])
-#    print(type(df.loc[0, col]), '\n')
+#        if null_percent > 0.10:
+#            nulls_in_full = full_df.loc[full_df['pitch_type'].isnull(), :].index.values.tolist()
+#            df = df.drop(nulls_in_full, axis = 0)
+#            print(nulls)
+#            print(pitches_thrown)
+#            print(null_percent)
+#            sys.stdout.flush()        
+#
+#df.reset_index(inplace = True)
+

@@ -13,3 +13,9 @@ df2$year <- as.factor(df2$year)
 ggplot(df2, aes(x = year, y = nulls)) +
     geom_boxplot()
 ggsave('nulls_by_game.pdf')
+
+df3 <- read.csv('consec_nulls.csv')
+
+ggplot(df3, aes(x = consec_nulls)) +
+    geom_histogram(binwidth = 1)
+ggsave('consec_nulls.pdf')
