@@ -16,7 +16,7 @@ year,game_id,nulls
 2014,gid_2014_04_16_tbamlb_balmlb_1,1
 2014,gid_2014_04_18_cinmlb_chnmlb_1,1
 2014,gid_2014_04_18_seamlb_miamlb_1,1
-2014,gid_2014_04_20_nyamlb_tbamlb_1,1
+2014,gid_2014_04_20_nyamlb_tbamlb_1,3
 2014,gid_2014_04_20_seamlb_miamlb_1,6
 2014,gid_2014_04_21_balmlb_bosmlb_1,2
 2014,gid_2014_04_21_miamlb_atlmlb_1,1
@@ -28,14 +28,14 @@ year,game_id,nulls
 2014,gid_2014_05_02_oakmlb_bosmlb_1,9
 2014,gid_2014_05_03_seamlb_houmlb_1,2
 2014,gid_2014_05_04_wasmlb_phimlb_1,1
-2014,gid_2014_05_05_nyamlb_anamlb_1,2
+2014,gid_2014_05_05_nyamlb_anamlb_1,4
 2014,gid_2014_05_06_balmlb_tbamlb_1,1
 2014,gid_2014_05_08_kcamlb_seamlb_1,4
 2014,gid_2014_05_10_sfnmlb_lanmlb_1,1
 2014,gid_2014_05_11_kcamlb_seamlb_1,6
 2014,gid_2014_05_14_tbamlb_seamlb_1,6
 2014,gid_2014_05_15_miamlb_sfnmlb_1,1
-2014,gid_2014_05_16_detmlb_bosmlb_1,2
+2014,gid_2014_05_16_detmlb_bosmlb_1,4
 2014,gid_2014_05_17_detmlb_bosmlb_1,1
 2014,gid_2014_05_17_sdnmlb_colmlb_1,5
 2014,gid_2014_05_18_tormlb_texmlb_1,1
@@ -73,6 +73,8 @@ year,game_id,nulls
 2014,gid_2014_06_16_nynmlb_slnmlb_1,1
 2014,gid_2014_06_17_phimlb_atlmlb_1,2
 2014,gid_2014_06_19_chamlb_minmlb_1,1
+2014,gid_2014_06_20_balmlb_nyamlb_1,1
+2014,gid_2014_06_20_seamlb_kcamlb_1,2
 2014,gid_2014_06_21_bosmlb_oakmlb_1,1
 2014,gid_2014_06_21_nynmlb_miamlb_1,1
 2014,gid_2014_06_22_bosmlb_oakmlb_1,1
@@ -145,6 +147,7 @@ year,game_id,nulls
 2014,gid_2014_09_05_pitmlb_chnmlb_1,2
 2014,gid_2014_09_07_arimlb_lanmlb_1,3
 2014,gid_2014_09_07_houmlb_oakmlb_1,1
+2014,gid_2014_09_07_kcamlb_nyamlb_1,4
 2014,gid_2014_09_07_tormlb_bosmlb_1,1
 2014,gid_2014_09_09_atlmlb_wasmlb_1,2
 2014,gid_2014_09_10_colmlb_nynmlb_1,1
@@ -189,6 +192,8 @@ year,game_id,nulls
 2015,gid_2015_04_16_kcamlb_minmlb_1,1
 2015,gid_2015_04_16_milmlb_slnmlb_1,1
 2015,gid_2015_04_16_phimlb_wasmlb_1,1
+2015,gid_2015_04_17_anamlb_houmlb_1,1
+2015,gid_2015_04_17_balmlb_bosmlb_1,1
 2015,gid_2015_04_17_clemlb_minmlb_1,7
 2015,gid_2015_04_17_oakmlb_kcamlb_1,1
 2015,gid_2015_04_17_phimlb_wasmlb_1,1
@@ -234,8 +239,10 @@ year,game_id,nulls
 2015,gid_2015_05_22_chnmlb_arimlb_1,1
 2015,gid_2015_05_23_phimlb_wasmlb_1,4
 2015,gid_2015_05_23_slnmlb_kcamlb_1,2
+2015,gid_2015_05_24_anamlb_bosmlb_1,1
 2015,gid_2015_05_24_sdnmlb_lanmlb_1,1
 2015,gid_2015_05_25_phimlb_nynmlb_1,1
+2015,gid_2015_05_25_sdnmlb_anamlb_1,1
 2015,gid_2015_05_26_arimlb_slnmlb_1,2
 2015,gid_2015_05_27_bosmlb_minmlb_1,2
 2015,gid_2015_05_27_houmlb_balmlb_1,1
@@ -247,6 +254,7 @@ year,game_id,nulls
 2015,gid_2015_05_30_tormlb_minmlb_1,4
 2015,gid_2015_05_31_atlmlb_sfnmlb_1,1
 2015,gid_2015_05_31_clemlb_seamlb_1,4
+2015,gid_2015_05_31_miamlb_nynmlb_1,1
 2015,gid_2015_05_31_nyamlb_oakmlb_1,1
 2015,gid_2015_05_31_wasmlb_cinmlb_1,1
 2015,gid_2015_06_01_atlmlb_arimlb_1,1
@@ -275,6 +283,7 @@ year,game_id,nulls
 2015,gid_2015_06_27_colmlb_sfnmlb_1,1
 2015,gid_2015_06_28_chnmlb_slnmlb_1,1
 2015,gid_2015_06_28_clemlb_balmlb_2,1
+2015,gid_2015_06_29_milmlb_phimlb_1,1
 2015,gid_2015_07_01_chamlb_slnmlb_1,1
 2015,gid_2015_07_02_sdnmlb_slnmlb_1,2
 2015,gid_2015_07_03_milmlb_cinmlb_1,1
@@ -284,9 +293,10 @@ year,game_id,nulls
 2015,gid_2015_07_10_detmlb_minmlb_1,1
 2015,gid_2015_07_18_lanmlb_wasmlb_1,5
 2015,gid_2015_07_18_texmlb_houmlb_1,2
-2015,gid_2015_07_19_clemlb_cinmlb_1,1
+2015,gid_2015_07_19_clemlb_cinmlb_1,2
 2015,gid_2015_07_22_chnmlb_cinmlb_2,6
 2015,gid_2015_07_22_texmlb_colmlb_1,1
+2015,gid_2015_07_24_chamlb_clemlb_1,1
 2015,gid_2015_07_25_atlmlb_slnmlb_1,5
 2015,gid_2015_07_25_cinmlb_colmlb_1,1
 2015,gid_2015_07_25_houmlb_kcamlb_1,4
@@ -294,15 +304,16 @@ year,game_id,nulls
 2015,gid_2015_07_25_phimlb_chnmlb_1,1
 2015,gid_2015_07_26_atlmlb_slnmlb_1,1
 2015,gid_2015_07_28_colmlb_chnmlb_1,2
-2015,gid_2015_07_29_pitmlb_minmlb_1,2
-2015,gid_2015_07_30_sdnmlb_nynmlb_1,1
+2015,gid_2015_07_29_pitmlb_minmlb_1,3
+2015,gid_2015_07_30_sdnmlb_nynmlb_1,4
 2015,gid_2015_08_01_arimlb_houmlb_1,5
+2015,gid_2015_08_04_sdnmlb_milmlb_1,1
 2015,gid_2015_08_06_kcamlb_detmlb_1,1
 2015,gid_2015_08_08_lanmlb_pitmlb_1,2
 2015,gid_2015_08_09_colmlb_wasmlb_1,2
 2015,gid_2015_08_14_anamlb_kcamlb_1,1
 2015,gid_2015_08_14_miamlb_slnmlb_1,1
-2015,gid_2015_08_15_miamlb_slnmlb_1,2
+2015,gid_2015_08_15_miamlb_slnmlb_1,3
 2015,gid_2015_08_15_wasmlb_sfnmlb_1,1
 2015,gid_2015_08_16_anamlb_kcamlb_1,1
 2015,gid_2015_08_16_pitmlb_nynmlb_1,3
@@ -320,6 +331,7 @@ year,game_id,nulls
 2015,gid_2015_08_23_milmlb_wasmlb_1,2
 2015,gid_2015_08_23_sfnmlb_pitmlb_1,1
 2015,gid_2015_08_23_texmlb_detmlb_1,1
+2015,gid_2015_08_26_anamlb_detmlb_1,1
 2015,gid_2015_08_27_pitmlb_miamlb_1,1
 2015,gid_2015_08_30_anamlb_clemlb_1,1
 2015,gid_2015_08_30_nyamlb_atlmlb_1,7
@@ -335,6 +347,8 @@ year,game_id,nulls
 2015,gid_2015_09_13_wasmlb_miamlb_1,1
 2015,gid_2015_09_16_cinmlb_sfnmlb_1,1
 2015,gid_2015_09_19_arimlb_sfnmlb_1,1
+2015,gid_2015_09_19_chamlb_clemlb_1,1
+2015,gid_2015_09_20_balmlb_tbamlb_1,1
 2015,gid_2015_09_20_sdnmlb_colmlb_1,1
 2015,gid_2015_09_20_slnmlb_chnmlb_1,1
 2015,gid_2015_09_23_anamlb_houmlb_1,1
@@ -347,9 +361,11 @@ year,game_id,nulls
 2015,gid_2015_10_01_chnmlb_cinmlb_1,4
 2015,gid_2015_10_04_anamlb_texmlb_1,1
 2015,gid_2015_10_04_cinmlb_pitmlb_1,1
+2015,gid_2015_10_09_houmlb_kcamlb_1,2
 2015,gid_2015_10_11_kcamlb_houmlb_1,1
 2015,gid_2015_10_14_houmlb_kcamlb_1,2
 2015,gid_2015_10_17_chnmlb_nynmlb_1,8
+2015,gid_2015_10_21_kcamlb_tormlb_1,1
 2016,gid_2016_04_04_seamlb_texmlb_1,1
 2016,gid_2016_04_05_bosmlb_clemlb_1,2
 2016,gid_2016_04_06_wasmlb_atlmlb_1,1
@@ -359,13 +375,14 @@ year,game_id,nulls
 2016,gid_2016_04_11_atlmlb_wasmlb_1,4
 2016,gid_2016_04_12_texmlb_seamlb_1,1
 2016,gid_2016_04_13_kcamlb_houmlb_1,2
+2016,gid_2016_04_15_atlmlb_miamlb_1,1
 2016,gid_2016_04_16_nynmlb_clemlb_1,1
 2016,gid_2016_04_16_tormlb_bosmlb_1,1
 2016,gid_2016_04_18_milmlb_minmlb_1,9
 2016,gid_2016_04_20_chnmlb_slnmlb_1,36
 2016,gid_2016_04_20_colmlb_cinmlb_1,7
 2016,gid_2016_04_23_bosmlb_houmlb_1,5
-2016,gid_2016_04_24_bosmlb_houmlb_1,3
+2016,gid_2016_04_24_bosmlb_houmlb_1,4
 2016,gid_2016_04_25_pitmlb_colmlb_1,4
 2016,gid_2016_04_25_sdnmlb_sfnmlb_1,1
 2016,gid_2016_04_26_cinmlb_nynmlb_1,2
@@ -378,8 +395,9 @@ year,game_id,nulls
 2016,gid_2016_05_01_atlmlb_chnmlb_1,1
 2016,gid_2016_05_07_kcamlb_clemlb_1,1
 2016,gid_2016_05_07_seamlb_houmlb_1,7
-2016,gid_2016_05_07_wasmlb_chnmlb_1,3
+2016,gid_2016_05_07_wasmlb_chnmlb_1,4
 2016,gid_2016_05_08_oakmlb_balmlb_1,1
+2016,gid_2016_05_08_texmlb_detmlb_1,1
 2016,gid_2016_05_08_wasmlb_chnmlb_1,1
 2016,gid_2016_05_09_milmlb_miamlb_1,1
 2016,gid_2016_05_10_nynmlb_lanmlb_1,1
@@ -390,7 +408,7 @@ year,game_id,nulls
 2016,gid_2016_05_15_slnmlb_lanmlb_1,1
 2016,gid_2016_05_16_nyamlb_arimlb_1,1
 2016,gid_2016_05_17_colmlb_slnmlb_1,1
-2016,gid_2016_05_18_bosmlb_kcamlb_2,1
+2016,gid_2016_05_18_bosmlb_kcamlb_2,3
 2016,gid_2016_05_21_chnmlb_sfnmlb_1,1
 2016,gid_2016_05_22_chnmlb_sfnmlb_1,8
 2016,gid_2016_05_22_clemlb_bosmlb_1,27
@@ -419,6 +437,7 @@ year,game_id,nulls
 2016,gid_2016_06_05_milmlb_phimlb_1,1
 2016,gid_2016_06_05_wasmlb_cinmlb_1,1
 2016,gid_2016_06_06_anamlb_nyamlb_1,1
+2016,gid_2016_06_08_atlmlb_sdnmlb_1,1
 2016,gid_2016_06_08_kcamlb_balmlb_1,2
 2016,gid_2016_06_10_balmlb_tormlb_1,1
 2016,gid_2016_06_10_lanmlb_sfnmlb_1,1
@@ -429,7 +448,7 @@ year,game_id,nulls
 2016,gid_2016_06_13_milmlb_sfnmlb_1,1
 2016,gid_2016_06_14_nyamlb_colmlb_1,1
 2016,gid_2016_06_14_texmlb_oakmlb_1,1
-2016,gid_2016_06_15_detmlb_chamlb_1,3
+2016,gid_2016_06_15_detmlb_chamlb_1,4
 2016,gid_2016_06_18_chamlb_clemlb_1,1
 2016,gid_2016_06_18_pitmlb_chnmlb_1,3
 2016,gid_2016_06_18_seamlb_bosmlb_1,1
@@ -457,12 +476,12 @@ year,game_id,nulls
 2016,gid_2016_07_17_miamlb_slnmlb_1,1
 2016,gid_2016_07_17_pitmlb_wasmlb_1,4
 2016,gid_2016_07_18_clemlb_kcamlb_1,1
-2016,gid_2016_07_21_milmlb_pitmlb_1,1
+2016,gid_2016_07_21_milmlb_pitmlb_1,2
 2016,gid_2016_07_22_seamlb_tormlb_1,2
 2016,gid_2016_07_23_anamlb_houmlb_1,15
 2016,gid_2016_07_23_sfnmlb_nyamlb_1,1
 2016,gid_2016_07_27_seamlb_pitmlb_1,1
-2016,gid_2016_07_28_chamlb_chnmlb_1,2
+2016,gid_2016_07_28_chamlb_chnmlb_1,3
 2016,gid_2016_07_28_wasmlb_sfnmlb_1,5
 2016,gid_2016_07_29_wasmlb_sfnmlb_1,1
 2016,gid_2016_07_30_seamlb_chnmlb_1,1
@@ -504,7 +523,7 @@ year,game_id,nulls
 2016,gid_2016_09_14_nynmlb_wasmlb_1,2
 2016,gid_2016_09_16_miamlb_phimlb_1,1
 2016,gid_2016_09_16_milmlb_chnmlb_1,1
-2016,gid_2016_09_16_wasmlb_atlmlb_1,1
+2016,gid_2016_09_16_wasmlb_atlmlb_1,2
 2016,gid_2016_09_17_detmlb_clemlb_1,1
 2016,gid_2016_09_17_nyamlb_bosmlb_1,4
 2016,gid_2016_09_18_houmlb_seamlb_1,1
@@ -512,6 +531,7 @@ year,game_id,nulls
 2016,gid_2016_09_20_tormlb_seamlb_1,1
 2016,gid_2016_09_24_bosmlb_tbamlb_1,1
 2016,gid_2016_09_25_kcamlb_detmlb_1,2
+2016,gid_2016_09_27_chnmlb_pitmlb_1,1
 2016,gid_2016_09_27_nynmlb_miamlb_1,1
 2016,gid_2016_09_28_chnmlb_pitmlb_1,2
 2016,gid_2016_09_28_minmlb_kcamlb_1,2
@@ -660,7 +680,7 @@ year,game_id,nulls
 2017,gid_2017_05_06_tormlb_tbamlb_1,1
 2017,gid_2017_05_07_bosmlb_minmlb_1,4
 2017,gid_2017_05_07_nyamlb_chnmlb_1,5
-2017,gid_2017_05_07_sfnmlb_cinmlb_1,1
+2017,gid_2017_05_07_sfnmlb_cinmlb_1,2
 2017,gid_2017_05_07_wasmlb_phimlb_1,2
 2017,gid_2017_05_08_wasmlb_balmlb_1,1
 2017,gid_2017_05_09_detmlb_arimlb_1,8
@@ -686,6 +706,7 @@ year,game_id,nulls
 2017,gid_2017_05_15_milmlb_sdnmlb_1,1
 2017,gid_2017_05_15_tbamlb_clemlb_1,4
 2017,gid_2017_05_16_atlmlb_tormlb_1,7
+2017,gid_2017_05_16_balmlb_detmlb_1,1
 2017,gid_2017_05_16_chamlb_anamlb_1,4
 2017,gid_2017_05_16_nynmlb_arimlb_1,9
 2017,gid_2017_05_16_oakmlb_seamlb_1,8
@@ -812,7 +833,7 @@ year,game_id,nulls
 2017,gid_2017_06_26_cinmlb_slnmlb_1,1
 2017,gid_2017_06_26_minmlb_bosmlb_1,3
 2017,gid_2017_06_27_balmlb_tormlb_1,2
-2017,gid_2017_06_27_colmlb_sfnmlb_1,7
+2017,gid_2017_06_27_colmlb_sfnmlb_1,8
 2017,gid_2017_06_27_minmlb_bosmlb_1,3
 2017,gid_2017_06_27_slnmlb_arimlb_1,6
 2017,gid_2017_06_28_chnmlb_wasmlb_1,1
@@ -1010,6 +1031,7 @@ year,game_id,nulls
 2017,gid_2017_09_04_slnmlb_sdnmlb_1,2
 2017,gid_2017_09_05_slnmlb_sdnmlb_1,1
 2017,gid_2017_09_05_wasmlb_miamlb_1,5
+2017,gid_2017_09_06_chnmlb_pitmlb_1,1
 2017,gid_2017_09_06_milmlb_cinmlb_1,4
 2017,gid_2017_09_06_wasmlb_miamlb_1,4
 2017,gid_2017_09_07_miamlb_atlmlb_1,4
@@ -1024,6 +1046,7 @@ year,game_id,nulls
 2017,gid_2017_09_10_miamlb_atlmlb_1,1
 2017,gid_2017_09_11_chamlb_kcamlb_1,1
 2017,gid_2017_09_11_pitmlb_milmlb_1,2
+2017,gid_2017_09_12_atlmlb_wasmlb_1,1
 2017,gid_2017_09_12_balmlb_tormlb_1,1
 2017,gid_2017_09_12_colmlb_arimlb_1,4
 2017,gid_2017_09_12_lanmlb_sfnmlb_1,4
@@ -1066,6 +1089,7 @@ year,game_id,nulls
 2017,gid_2017_09_28_anamlb_chamlb_1,1
 2017,gid_2017_09_28_houmlb_bosmlb_1,4
 2017,gid_2017_09_29_houmlb_bosmlb_1,6
+2017,gid_2017_09_29_oakmlb_texmlb_1,1
 2017,gid_2017_09_30_houmlb_bosmlb_1,4
 2017,gid_2017_09_30_seamlb_anamlb_1,1
 2017,gid_2017_10_01_houmlb_bosmlb_1,1

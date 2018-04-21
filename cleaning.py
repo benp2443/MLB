@@ -119,4 +119,6 @@ while i < len(df):
 # Can delete the column below I think
 df['diff'] = df['outs_test'] - df['outs']
 
- 
+##### Look at pitch types and remove pitch outs #####
+
+

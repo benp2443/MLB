@@ -13,6 +13,10 @@ print('Number of pitchers: {}'.format(len(pitchers_list)))
 # Create year column
 df['year'] = df['game_id'].str[4:8].astype(int)
 
+# Train/test column
+data_split = {2014:'priors', 2015:'train', 2016:'train', 2017:'test'}
+df['train/test'] = df['year'].map(data_split)
+
 # Create dataframe which has the pitcher id, year, and number of pitchers thrown in each row
 pitcher_count = df.groupby(['pitcher_id', 'year'])['home_team'].count().reset_index()
 pitcher_count.columns = ['pitcher_id', 'year', 'pitch_count']
@@ -65,6 +69,9 @@ for col in columns:
         print(df[col].isnull().sum())
 print('')
 
+# Replace 'UN' (unknown) pitch types with null
+df.replace('UN', np.nan, inplace = True)
+
 nulls_df = df.loc[df['pitch_type'].isnull(), :]
 
 nulls_by_year = nulls_df.groupby(['year'])['home_team'].count().reset_index()
@@ -86,6 +93,7 @@ nulls_by_game = nulls_df.groupby(['year', 'game_id'])['home_team'].count().reset
 nulls_by_game.rename(columns = {'home_team':'nulls'}, inplace = True)
 nulls_by_game.to_csv('visualisations/nulls/nulls_by_game.csv', index = False)
 
+df['one_off_null'] = ''
 null_idx = nulls_df.index.values.tolist()
 i = 0
 count = 0
@@ -94,6 +102,9 @@ while i < len(null_idx) - 1:
     if null_idx[i+1] - null_idx[i] == 1:
         count += 1
     else:
+        if count == 0:
+            df.loc[i, 'one_off_null'] = True
+
         consec_nulls.append(count)
         count = 0
          
@@ -127,4 +138,25 @@ consec_nulls.to_csv('visualisations/nulls/consec_nulls.csv', index = False)
 #            sys.stdout.flush()        
 #
 #df.reset_index(inplace = True)
+
+
+# Replace one off nulls with pitchers most frequent pitch
+temp = df.loc[df['one_off_null'] == True, :]
+pitchers = df['pitcher_id'].unique().tolist()
+
+for pitcher in pitchers:
+    pitcher_df = df.loc[((df['pitcher_id'] == pitcher) & (df['train/test'] == 'train')), :]
+    pitch_count_df = pitcher_df.groupby('pitch_type')['home_team'].count().reset_index()
+    pitch_count_df.columns = ['pitch_type', 'count']
+    
+    pitch_count_df = pitch_count_df.sort_values(by = 'count', ascending = False)
+    most_freq_pitch = pitch_count_df.iloc[0,0]
+    print(pitch_count_df)
+    print(most_freq_pitch)
+
+    one_off_nulls_idx = df.loc[((df['one_off_null'] == True) & (df['pitcher_id'] == pitcher)), :].index.values
+    df.loc[one_off_nulls_idx, 'pitch_type'] = most_freq_pitch
+
+
+
 

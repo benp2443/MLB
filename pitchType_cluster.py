@@ -6,7 +6,8 @@ from sklearn import preprocessing
 def cluster_pitch_types(df, pitcher_id):
     df2 = pd.read_csv(df)
 
-    temp = df2.loc[df2['pitcher_id'] == pitcher_id, ['pfx_x', 'pfx_z', 'start_speed', 'pitch_type']]
+    temp = df2.loc[df2['pitcher_id'] == pitcher_id, ['pfx_x', 'pfx_y', 'start_speed', 'pitch_type']]
+    temp.dropna(axis = 0, how = 'any', inplace = True)
     number_clusters = len(temp['pitch_type'].unique())
 
     kmeans = KMeans(n_clusters = number_clusters, n_init = 20, random_state = 0)
@@ -50,11 +51,11 @@ def cluster_pitch_types(df, pitcher_id):
 
     return pitch_types
 
-test1 = cluster_pitch_types('per_pitch_confidence.csv', 465657) 
+test1 = cluster_pitch_types('mlb_gd_full.csv', 465657) 
 print(test1)
-test2 = cluster_pitch_types('per_pitch_confidence.csv', 593372)
+test2 = cluster_pitch_types('mlb_gd_full.csv', 593372)
 print(test2)
-test3 = cluster_pitch_types('per_pitch_confidence.csv', 434378)
+test3 = cluster_pitch_types('mlb_gd_full.csv', 434378)
 print(test3)
 
 #clusters_465657 = {'FF':'FF/FT/FC', 'FT':'FF/FT/FC', 'FC':'FF/FT/FC', 'CU':'CU', 'SL':'SL', 'CH':'CH'}
