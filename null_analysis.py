@@ -71,6 +71,7 @@ print('')
 
 # Replace 'UN' (unknown) pitch types with null
 df.replace('UN', np.nan, inplace = True)
+df.replace('FA', 'FF', inplace = True)
 
 nulls_df = df.loc[df['pitch_type'].isnull(), :]
 

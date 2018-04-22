@@ -14,7 +14,7 @@ print('Number of pitchers: {}'.format(len(pitchers_list)))
 df['year'] = df['game_id'].str[4:8].astype(int)
 
 # Create dataframe which has the pitcher id, year, and number of pitchers thrown in each row
-pitcher_count = df.groupby(['pitcher_id', 'year'])['home'].count().reset_index()
+pitcher_count = df.groupby(['pitcher_id', 'year'])['home_team'].count().reset_index()
 pitcher_count.columns = ['pitcher_id', 'year', 'pitch_count']
 
 # Create column which is True if pitcher threw over 500 pitchers for that year and null otherwise
@@ -38,7 +38,7 @@ for pitcher in pitchers_list:
 
     # exclude pitchers which have not thrown more than 500 pitches in each season
     years_over_500_column = temp['over_500'].sum()
-    if over_500_column != 4:
+    if years_over_500_column != 4:
         continue
 
     final_pitchers.append(pitcher)
@@ -120,5 +120,35 @@ while i < len(df):
 df['diff'] = df['outs_test'] - df['outs']
 
 ##### Look at pitch types and remove pitch outs #####
+
+# Pitch count
+df['pitch_count'] = 0
+
+pitch_count = {}
+
+pitcher_id_col = column_idx(df, 'pitcher_id')
+pitch_count_col = column_idx(df, 'pitch_count')
+game_col = column_idx(df, 'game_id')
+
+last_game = df.loc[0, 'game_id']
+
+i = 0
+while i < len(df):
+    game = df.iat[i, game_col]
+
+    if game != last_game:
+        pitch_count = {} # Reset dictionary for new game
+        last_game = game
+        continue # Don't increase i. At next iteration, game == last_game on the same row
+
+    pitcher_id = df.iat[i, pitcher_id_col]
+
+    if pitcher_id in pitch_count:
+        df.iat[i, pitch_count_col] = pitch_count[pitcher_id]
+        pitch_count[pitcher_id] += 1
+    else:
+        pitch_count[pitcher_id] = 1
+
+    i += 1
 
 
