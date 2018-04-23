@@ -164,32 +164,53 @@ for col in prior_columns:
     df[column_name] = df[col]/df['total_pitches']
 
 years = [2015, 2016, 2017]
-temp = df.loc[df['year'].isin(years), ['global_prior_SL_percent', 'global_prior_IN_percent', 'global_prior_CH_percent', 'global_prior_FT_percent', 'global_prior_FF_percent']].reset_index(drop = True).reset_index()
-temp.rename(columns = {'index':'pitch_id'}, inplace = True)
-temp = pd.melt(temp, id_vars = ['pitch_id'])
-temp.to_csv('visualisations/pitch_frequencies/pitch_freq.csv', index = False)
+temp = df.loc[df['year'].isin(years), ['year', 'global_prior_SL_percent', 'global_prior_IN_percent', 'global_prior_CH_percent', \
+                                       'global_prior_FT_percent', 'global_prior_FF_percent']].reset_index(drop = True).reset_index()
+
+temp2.rename(columns = {'index':'pitch_id'}, inplace = True)
+temp2 = pd.melt(temp2, id_vars = ['pitch_id', 'year'])
+temp2.to_csv('visualisations/pitch_frequencies/pitch_freq.csv', index = False)
 
 # Priors to the specific batter
+batter_specific_cols = []
+
+for col in prior_columns:
+    col_name = col + '_to_batter'
+    batter_specific_cols.append(col_name)
+    df[col_name] = 0.0
+
+
 batter_priors = {}
 i = 0
 while i < len(df):
     batter = df.loc[i, 'batter_id']
     pitch = df.loc[i, 'pitch_type']
 
-    if batter in better_priors:
-        batter_prior[batter][pitch] += 1
-        batter_prior[batter][total] += 1
+    if batter in batter_priors:
+        for col in batter_specific_cols:
+            for p_type in train_pitch_types:
+                if p_type in col:
+                    df.loc[i, col] = batter_priors[batter][p_type]
+                    break
+
+        batter_priors[batter][pitch] += 1
 
     else:
         batter_priors[batter] = {}
-        for pitch in train_pitch_types: #Need to add a total section plus make sure prior code includes new pitch types from test set.
-            batter_priors[batter][pitch] = 0
+        for pitch in train_pitch_types: # If they add a new pitch between train and test, too bad.
+            batter_priors[batter][pitch] = 0.0
 
         continue
 
+    i += 1
 
+df['batter_specific_count'] = df.loc[:, batter_specific_cols].sum(axis = 1)
 
+for col in batter_specific_cols:
+     column_name = col + '_percent'
+     df[column_name] = df[col]/df['batter_specific_count']
 
+##### How is pitch performing during a game #####
 
+# Start by looking at the speed of pitch
 
-#print(df.loc[:, ['global_prior_SL', 'global_prior_IN', 'global_prior_CH', 'global_prior_FT', 'global_prior_FF', 'total_pitches']])
