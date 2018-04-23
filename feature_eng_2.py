@@ -57,4 +57,8 @@ temp.to_csv('visualisations/speed_change/FF_speed.csv', index = False)
 temp2 = temp.groupby(['pitch_count_bucket'])['start_speed'].mean().reset_index()
 print(temp2)
 
+##### Looking at runners on base #####
+df['runners_on'] = df['on_first'].astype(int) + df['on_second'].astype(int) + df['on_third'].astype(int)
+df['weighted_runners_on'] = df['on_first'].astype(int) + 2*df['on_second'].astype(int) + 3*df['on_third'].astype(int)
 
+print(df.loc[:, ['on_first', 'on_second', 'on_third', 'runners_on', 'weighted_runners_on']])
