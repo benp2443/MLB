@@ -51,21 +51,34 @@ df = df.loc[df['pitcher_id'].isin(final_pitchers), :]
 
 ##### Drop pitch outs and intentional balls #####
 
+# Replace unknown pitches with null
 df.replace('UN', np.nan, inplace = True)
 print(df['pitch_type'].unique())
 
 drop_pitches = ['IN', 'PO']
 df = df.loc[~(df['pitch_type'].isin(drop_pitches)), :]
 
+
 temp = df.loc[~(df['pitch_type'].isnull()), :]
-print(temp['pitch_type'].unique())
 
-temp2 = temp.groupby('pitch_type')['home_team'].count().reset_index()
-temp2.columns = ['pitch_type', 'count']
-temp2.to_csv('visualisations/pitch_types/pitch_type_count.csv', index = False)
+# Replace most 'AB' with the pitchers most common pitch
+print(temp.loc[temp['pitch_type'] == 'AB', ['pitcher_id', 'pitch_type', 'game_id', 'ab_game_num', 'start_speed', 'type_confidence']]) # Pitch confidence is 0.0 
 
-# Inspect UN (51), AB (3)
-ab_df = temp.loc[temp['pitch_type'] == 'AB', ['pitcher_id', 'game_id', 'ab_game_num']]
-print(ab_df)
+print(temp.loc[df['type_confidence'].isnull(), ['game_id', 'pitch_type',]])
+print(temp.loc[df['type_confidence'] == 0.0, ['game_id', 'pitch_type']])
+
+print(len(temp.loc[df['type_confidence'] == 0.0, ['game_id', 'pitch_type']]))
+print(len(temp.loc[df['type_confidence'] < 0.1, ['game_id', 'pitch_type']]))
+
+print(temp.loc[df['type_confidence'] < 0.1, ['game_id', 'pitch_type']])
+# Analysis of pitch confidence
 
 
+
+#temp = df.loc[~(df['pitch_type'].isnull()), :]
+# Visualise new pitch set
+#temp = df.loc[~(df['pitch_type'].isnull()), :]
+#print(temp['pitch_type'].unique())
+#temp2 = temp.groupby('pitch_type')['home_team'].count().reset_index()
+#temp2.columns = ['pitch_type', 'count']
+#temp2.to_csv('visualisations/pitch_types/pitch_type_count.csv', index = False)
