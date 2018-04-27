@@ -12,6 +12,7 @@ args = parser.parse_args()
 pitcher_volatility = []
 
 for pitcher in args.input:
+
     df = pd.read_csv(pitcher)
     pitcher_id = df.loc[0, 'pitcher_id']
 
@@ -44,8 +45,9 @@ for pitcher in args.input:
         if pitch not in train_pitches:
             data.append(['train', pitch, 0.0])
     
-    df = pd.DataFrame(data, columns = percent_df.columns.values)
-    percent_df = percent_df.append(df)
+    if len(data) > 0:
+        df = pd.DataFrame(data, columns = percent_df.columns.values)
+        percent_df = percent_df.append(df)
     
     # Drop pitch types that are in train but not test -> inner join will handle this
     drop = []
@@ -53,12 +55,13 @@ for pitcher in args.input:
         if pitch not in test_pitches:
             drop.append(pitch)
     
-    percent_df = percent_df.loc[~((percent_df['pitch_type'].isin(drop)) & (percent_df['train_test'] == 'train')), :]
+    if len(drop) > 0:
+        percent_df = percent_df.loc[~((percent_df['pitch_type'].isin(drop)) & (percent_df['train_test'] == 'train')), :]
     
-    # Need to re-weight train so it adds up to 100% -> Do I want to make it an if statement?
+    # Need to re-weight train so it adds up to 100% -> Make this cleaner so it doesn't happen when nothing has been dropped
     train = percent_df.loc[percent_df['train_test'] == 'train', :]
     train_sum = np.sum(train['percent'])
-    train['reweight_percent'] = round((train['percent']/train_sum)*100,2)
+    train.loc[:, 'reweight_percent'] = round((train['percent']/train_sum)*100,2)
     train.drop(['train_test', 'percent'], axis = 1, inplace = True)
     
     test = percent_df.loc[percent_df['train_test'] == 'test', :]
@@ -93,7 +96,7 @@ pitchers_top = top_10_df.sample(n = 4, random_state = 1)['pitcher_id'].values.to
 
 def name_later(list_name):
 
-    df = pd.DataFrame()
+    df2 = pd.DataFrame()
 
     for pitcher in list_name:
         file_path = 'individual_df/' + str(pitcher) + '.csv'
@@ -111,15 +114,16 @@ def name_later(list_name):
 
         temp3 = temp.merge(temp2, how = 'inner', on = 'train_test')
 
-        final['pitcher_id'] = pitcher
-        print(final)
+        temp3['percent'] = round((temp3['count']/temp3['pitches_thrown'])*100,2)
 
-        if len(df) == 0:
-            df = temp3
+        temp3['pitcher_id'] = pitcher
+
+        if len(df2) == 0:
+            df2 = temp3
         else:
-            df = pd.concat([df, temp3])
+            df2 = pd.concat([df2, temp3])
 
-    return df
+    return df2
 
 
 bottom_df = name_later(pitchers_bottom)

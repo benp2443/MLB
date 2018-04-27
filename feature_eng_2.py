@@ -15,7 +15,7 @@ df = pd.read_csv(args.input)
 def column_idx(df, column_name):
     return df.columns.values.tolist().index(column_name)
 
-#Pitch count -> Can delete once incorporated into cleaning
+# Pitch count -> Can delete once incorporated into cleaning
 df['pitch_count'] = 0
 
 pitch_count = {}
@@ -46,9 +46,36 @@ while i < len(df):
     i += 1
 
 
-for col in df.columns.values:
-    print(col)
+# At bat pitch count
+df['ab_pitch_count'] = -1
 
+ab_pitch_count_col = column_idx(df, 'ab_pitch_count')
+at_bat_col = column_idx(df, 'ab_game_num')
+
+last_ab_num = -1
+last_game = ''
+
+pitch_count = 0
+
+i = 0
+while i < len(df):
+    ab_num = df.iat[i, at_bat_col]
+    game = df.iat[i, game_col]
+
+    if ab_num != last_ab_num or game != last_game:
+        pitch_count = 0
+        last_game = game
+        last_ab_num = ab_num
+        continue
+    else:
+        df.iat[i, ab_pitch_count_col] = pitch_count
+        pitch_count += 1
+
+    i += 1
+
+
+print(df.loc[df['ab_pitch_count'] == -1, :])
+print(df['ab_pitch_count'].describe())
 ####### Visualise ########
 years = [2014, 2015, 2016]
 temp = df.loc[(df['year'].isin(years) & (df['pitch_type'] == 'FF')), :]
@@ -61,4 +88,3 @@ print(temp2)
 df['runners_on'] = df['on_first'].astype(int) + df['on_second'].astype(int) + df['on_third'].astype(int)
 df['weighted_runners_on'] = df['on_first'].astype(int) + 2*df['on_second'].astype(int) + 3*df['on_third'].astype(int)
 
-print(df.loc[:, ['on_first', 'on_second', 'on_third', 'runners_on', 'weighted_runners_on']])

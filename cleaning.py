@@ -116,12 +116,17 @@ while i < len(df):
 
     i += 1
 
-# Can delete the column below I think
-df['diff'] = df['outs_test'] - df['outs']
 
-##### Look at pitch types and remove pitch outs #####
+##### Drop pitch outs and intentional balls #####
 
-# Pitch count
+drop_pitches = ['IN', 'PO']
+df = df.loc[~(df['pitch_type'].isin(drop_pitches)), :].reset_index()
+
+##### Replace pitch type 'FA' with 'FF' #####
+df.replace('FA', 'FF', inplace = True)
+
+###### Add game pitch count and at bat pitch count columns before removing rows #####
+
 df['pitch_count'] = 0
 
 pitch_count = {}
@@ -147,8 +152,161 @@ while i < len(df):
         df.iat[i, pitch_count_col] = pitch_count[pitcher_id]
         pitch_count[pitcher_id] += 1
     else:
-        pitch_count[pitcher_id] = 1
+        pitch_count[pitcher_id] = 1 # pitch count already set to 0, so don't need to set here
 
     i += 1
 
+
+df['ab_pitch_count'] = -1
+
+ab_pitch_count_col = column_idx(df, 'ab_pitch_count')
+at_bat_col = column_idx(df, 'ab_game_num')
+
+last_ab_num = -1
+last_game = ''
+
+pitch_count = 0
+
+i = 0
+while i < len(df):
+    ab_num = df.iat[i, at_bat_col]
+    game = df.iat[i, game_col]
+
+    if ab_num != last_ab_num or game != last_game:
+        pitch_count = 0
+        last_game = game
+        last_ab_num = ab_num
+        continue
+    else:
+        df.iat[i, ab_pitch_count_col] = pitch_count
+        pitch_count += 1
+
+    i += 1
+
+##### Replace unknown (UN) pitch types or pitches with 0.0 confidence with null #####
+
+df.replace('UN', np.nan, inplace = True)
+
+zero_confidence_idx = df.loc[(df['type_confidence'] == 0.0) & (~df['pitch_type'].isnull()), ].index.values
+df.loc[zero_confidence_idx, 'pitch_type'] = np.nan
+
+###### Prior pitch, prior location, prior result #####
+
+df['prior_pitch'] = ''
+df['prior_px'] = np.inf
+df['prior_py'] = np.inf
+#df['prior_result'] = ''
+
+game_col = column_idx(df, 'game_id')
+prior_pitch_col = column_idx(df, 'prior_pitch')
+prior_x_loc_col = column_idx(df, 'prior_px')
+prior_y_loc_col = column_idx(df, 'prior_py')
+ab_col = column_idx(df, 'ab_game_num')
+pitch_col = column_idx(df, 'pitch_type')
+x_loc_col = column_idx(df, 'px')
+y_loc_col = column_idx(df, 'py')
+#prior_result_col = column_idx(df, 'prior_result')
+
+last_pitch = ''
+last_x_loc = np.inf 
+last_y_loc = np.inf
+last_game = df.iat[0, game_col]
+last_ab = df.iat[0, ab_col]
+
+i = 0
+while i < len(df):
+    game = df.iat[i, game_col]
+    ab = df.iat[i, ab_col]
+
+    if ab != last_ab or game != last_game:
+  
+        last_pitch = ''
+        last_x_loc = np.inf
+        last_y_loc = np.inf
+        last_ab = ab
+        last_game = game
+        continue
+     
+    df.iat[i, prior_pitch_col] = last_pitch 
+    df.iat[i, prior_x_loc_col] = last_x_loc
+    df.iat[i, prior_y_loc_col] = last_y_loc
+
+    last_pitch = df.iat[i, pitch_col]
+    last_x_loc = df.iat[i, x_loc_col]
+    last_y_loc = df.iat[i, y_loc_col]
+
+    last_ab = ab
+    last_game = game
+
+    i += 1
+
+##### Pitch type nulls #####
+
+nulls_df = df.loc[df['pitch_type'].isnull(), :]
+
+# Calculate amount of null pitch types per year
+nulls_by_year = nulls_df.groupby(['year'])['home_team'].count().reset_index()
+nulls_by_year.rename(columns = {'home_team':'nulls'}, inplace = True)
+nulls_by_year['type'] = 'Total nulls'
+
+# Calculate the amount of games with nulls, split by year
+nulls_df2 = nulls_df.loc[:, ['year', 'game_id', 'home_team']].drop_duplicates()
+games_with_nulls = nulls_df2.groupby(['year'])['home_team'].count().reset_index()
+games_with_nulls.rename(columns = {'home_team':'nulls'}, inplace = True)
+games_with_nulls['type'] = 'Games with nulls'
+
+# Join the two dataframes above to allow for a side by side plot of data in r
+nulls_df3 = pd.concat([nulls_by_year, games_with_nulls], axis = 0)
+print(nulls_df3)
+nulls_df3.to_csv('visualisations/nulls/pitch_type_nulls.csv', index = False)
+
+# Calculate nulls per game (for games with nulls), split by year
+nulls_by_game = nulls_df.groupby(['year', 'game_id'])['home_team'].count().reset_index()
+nulls_by_game.rename(columns = {'home_team':'nulls'}, inplace = True)
+nulls_by_game.to_csv('visualisations/nulls/nulls_by_game.csv', index = False)
+
+# Calculate the amount of consecutive nulls 
+null_idx = nulls_df.index.values.tolist()
+i = 0
+count = 0
+consec_nulls = []
+while i < len(null_idx) - 1:
+    if null_idx[i+1] - null_idx[i] == 1:
+        count += 1
+    else:
+        consec_nulls.append(count)
+        count = 0
+         
+    i += 1
+
+consec_nulls = pd.DataFrame(consec_nulls, columns = ['consec_nulls'])
+consec_nulls.to_csv('visualisations/nulls/consec_nulls.csv', index = False)
+
+# dropping pitchers with too many null pitch types in a game
+games = nulls_df['game_id'].unique().tolist()
+
+for game in games:
+    temp = nulls_df.loc[nulls_df['game_id'] == game, :]
+    pitchers = temp['pitcher_id'].unique().tolist()
+    for pitcher in pitchers:
+        # Calculate amount of nulls for the specific pitcher in the game
+        pitcher_df = temp.loc[temp['pitcher_id'] == pitcher, :]
+        nulls = float(len(pitcher_df))
+
+        # Calculate the amount of pitchers thrown by the pitcher in the game
+        full_df = df.loc[((df['pitcher_id'] == pitcher) & (df['game_id'] == game)), :]
+        pitches_thrown = float(len(full_df))
+
+        # Calculate null percent for game
+        null_percent = nulls/pitches_thrown
+
+        if null_percent > 0.10:
+            nulls_in_full = full_df.loc[full_df['pitch_type'].isnull(), :].index.values.tolist()
+            df = df.drop(nulls_in_full, axis = 0)
+
+df.reset_index(inplace = True)
+
+
+# Replace one off nulls with pitchers most frequent pitch
+    
 
