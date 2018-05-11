@@ -1,5 +1,7 @@
 import pandas as pd
 import numpy as np
+import sys
+
 pd.set_option('max.rows', 500)
 
 df = pd.read_csv('mlb_gd_full.csv')
@@ -17,7 +19,7 @@ df['year'] = df['game_id'].str[4:8].astype(int)
 pitcher_count = df.groupby(['pitcher_id', 'year'])['home_team'].count().reset_index()
 pitcher_count.columns = ['pitcher_id', 'year', 'pitch_count']
 
-# Create column which is True if pitcher threw over 500 pitchers for that year and null otherwise
+# Create column which is True if pitcher threw over 500 pitches for that year and False otherwise
 def over_500(pitch_count_column):
     if pitch_count_column >= 500:
         return True
@@ -47,6 +49,8 @@ print('Number of pitchers after filter: {}'.format(len(final_pitchers)))
 
 # Filter df to only include pitchers who met the requirements 
 df = df.loc[df['pitcher_id'].isin(final_pitchers), :]
+print('Through pitcher filter')
+sys.stdout.flush()
 
 ##### Replace null home and away run values #####
 
@@ -91,7 +95,8 @@ ab_col = column_idx(df, 'ab_game_num')
 outs_col = column_idx(df, 'outs')
 outs_test_col = column_idx(df, 'outs_test')
 
-prev_base_sum = df.iat[0, on_first_col].astype(int) + df.iat[0, on_second_col].astype(int) + df.iat[0, on_third_col].astype(int) # With the filtered df, games/innings may start with runners on base
+prev_base_sum = df.iat[0, on_first_col].astype(int) + df.iat[0, on_second_col].astype(int) + \
+                df.iat[0, on_third_col].astype(int) # With the filtered df, games/innings may start with runners on base
 prev_ab = df.iat[0, ab_col]
 ab_start_outs = df.iat[0, outs_col]
 run_out = 0
@@ -116,14 +121,23 @@ while i < len(df):
 
     i += 1
 
+print('Outs updated')
+sys.stdout.flush()
 
 ##### Drop pitch outs and intentional balls #####
 
 drop_pitches = ['IN', 'PO']
-df = df.loc[~(df['pitch_type'].isin(drop_pitches)), :].reset_index()
+df = df.loc[~(df['pitch_type'].isin(drop_pitches)), :].reset_index(drop = True)
 
 ##### Replace pitch type 'FA' with 'FF' #####
 df.replace('FA', 'FF', inplace = True)
+
+##### Replace unknown (UN) pitch types or pitches with 0.0 confidence with null #####
+
+df.replace('UN', np.nan, inplace = True)
+
+zero_confidence_idx = df.loc[(df['type_confidence'] == 0.0) & (~df['pitch_type'].isnull()), ].index.values
+df.loc[zero_confidence_idx, 'pitch_type'] = np.nan
 
 ###### Add game pitch count and at bat pitch count columns before removing rows #####
 
@@ -183,12 +197,8 @@ while i < len(df):
 
     i += 1
 
-##### Replace unknown (UN) pitch types or pitches with 0.0 confidence with null #####
-
-df.replace('UN', np.nan, inplace = True)
-
-zero_confidence_idx = df.loc[(df['type_confidence'] == 0.0) & (~df['pitch_type'].isnull()), ].index.values
-df.loc[zero_confidence_idx, 'pitch_type'] = np.nan
+print('game and at bat count added')
+sys.stdout.flush()
 
 ###### Prior pitch, prior location, prior result #####
 
@@ -240,6 +250,8 @@ while i < len(df):
 
     i += 1
 
+print('priors added')
+sys.stdout.flush()
 ##### Pitch type nulls #####
 
 nulls_df = df.loc[df['pitch_type'].isnull(), :]
@@ -283,30 +295,63 @@ consec_nulls = pd.DataFrame(consec_nulls, columns = ['consec_nulls'])
 consec_nulls.to_csv('visualisations/nulls/consec_nulls.csv', index = False)
 
 # dropping pitchers with too many null pitch types in a game
-games = nulls_df['game_id'].unique().tolist()
+#games = nulls_df['game_id'].unique().tolist()
+#
+#for game in games:
+#    temp = nulls_df.loc[nulls_df['game_id'] == game, :]
+#    pitchers = temp['pitcher_id'].unique().tolist()
+#    for pitcher in pitchers:
+#        # Calculate amount of nulls for the specific pitcher in the game
+#        pitcher_df = temp.loc[temp['pitcher_id'] == pitcher, :]
+#        nulls = float(len(pitcher_df))
+#
+#        # Calculate the amount of pitchers thrown by the pitcher in the game
+#        full_df = df.loc[((df['pitcher_id'] == pitcher) & (df['game_id'] == game)), :]
+#        pitches_thrown = float(len(full_df))
+#
+#        # Calculate null percent for game
+#        null_percent = nulls/pitches_thrown
+#
+#        if null_percent > 0.10:
+#            nulls_in_full = full_df.loc[full_df['pitch_type'].isnull(), :].index.values.tolist()
+#            df = df.drop(nulls_in_full, axis = 0)
+#
 
-for game in games:
-    temp = nulls_df.loc[nulls_df['game_id'] == game, :]
-    pitchers = temp['pitcher_id'].unique().tolist()
-    for pitcher in pitchers:
-        # Calculate amount of nulls for the specific pitcher in the game
-        pitcher_df = temp.loc[temp['pitcher_id'] == pitcher, :]
-        nulls = float(len(pitcher_df))
+# Delete rows with null pitch types
+df = df.loc[~(df['pitch_type'].isnull()), :].reset_index(drop = True)
 
-        # Calculate the amount of pitchers thrown by the pitcher in the game
-        full_df = df.loc[((df['pitcher_id'] == pitcher) & (df['game_id'] == game)), :]
-        pitches_thrown = float(len(full_df))
+# train and test split
+data_split = {2014:'pre', 2015:'train', 2016:'train', 2017:'test'}
+df['train_test'] = df['year'].map(data_split)
 
-        # Calculate null percent for game
-        null_percent = nulls/pitches_thrown
+# Replace NA values for prior pitch, prior_px, prior_py
+df['prior_py'].replace(np.inf, np.nan, inplace = True)
+df['prior_px'].replace(np.inf, np.nan, inplace = True)
+df['prior_pitch'].replace('', np.nan, inplace = True)
 
-        if null_percent > 0.10:
-            nulls_in_full = full_df.loc[full_df['pitch_type'].isnull(), :].index.values.tolist()
-            df = df.drop(nulls_in_full, axis = 0)
+mean_px = df.loc[df['train_test'] == 'train', 'prior_px'].mean()
+mean_py = df.loc[df['train_test'] == 'train', 'prior_py'].mean()
+mode_type = df.loc[df['train_test'] == 'train', 'prior_pitch'].mode()[0]
 
-df.reset_index(inplace = True)
+df['prior_py'].replace(np.nan, mean_py, inplace = True)
+df['prior_px'].replace(np.nan, mean_px, inplace = True)
+df['prior_pitch'].replace(np.nan, mode_type, inplace = True)
 
+columns = df.columns.values.tolist()
 
-# Replace one off nulls with pitchers most frequent pitch
-    
+print(columns)
 
+print('Null Values', '\n')
+for col in columns:
+    null_values = df[col].isnull().sum()
+    if null_values > 0:
+        print(col)
+        print(df[col].isnull().sum())
+
+# Output seperate dataframe's for each pitcher
+pitchers = df['pitcher_id'].unique().tolist()
+
+for pitcher in pitchers:
+    temp = df.loc[df['pitcher_id'] == pitcher, :].reset_index(drop = True)
+    file_path = 'individual_df/' + str(pitcher) + '.csv'
+    temp.to_csv(file_path, index = False)

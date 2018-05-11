@@ -15,22 +15,29 @@ parser.add_argument('--input', nargs = '+', help = 'input data path')
 args = parser.parse_args()
 
 def cluster_pitch_types(df_path):
+    # Read in pitcher csv
     df2 = pd.read_csv(df_path)
 
+    # Filter data to the variables/rows required
     temp = df2.loc[df2['year'] != 2014, ['pfx_x', 'pfx_y', 'start_speed', 'pitch_type']]
     temp.dropna(axis = 0, how = 'any', inplace = True)
+
     number_clusters = len(temp['pitch_type'].unique())
+
+    # Scale data
     X_scaled = preprocessing.scale(temp.iloc[:, 0:-1].values)
 
+    # Run cluster analysis for multiple k values and append calinski harabaz (CH) score to list
     cluster_labels = []
     scores = []
     for i in range(2, number_clusters + 1):
         kmeans = KMeans(n_clusters = i, n_init = 20, random_state = 0).fit(X_scaled)
         labels = kmeans.labels_.tolist()
-
         cluster_labels.append(labels)
         scores.append(metrics.calinski_harabaz_score(X_scaled, labels))
-
+   
+    # Find the best CH score and take cluster max + 1. If occurs in the final cluster, that that cluster
+    # Then append the cluster labels to df
     max_idx = scores.index(max(scores))
     if max_idx + 1 == len(scores):
         temp['cluster'] = cluster_labels[max_idx]
@@ -39,8 +46,8 @@ def cluster_pitch_types(df_path):
 
     results = temp.groupby(['cluster', 'pitch_type'])['pfx_x'].count().reset_index()
     results.rename(columns = {'pfx_x':'count'}, inplace = True)
-    print(results)
     
+    # For each pitch type, find the cluster it occurs in the most
     pitch_types = results['pitch_type'].unique()
     pitch_grouping = {}
     for pitch in pitch_types:
@@ -59,14 +66,16 @@ def cluster_pitch_types(df_path):
 
         i += 1
     
+    # append the index of where each pitch type has its maximum value in the results df
     idx_list = []
     for pitch in pitch_types:
         idx_list.append(pitch_grouping[pitch]['idx'])
 
-    results2 = results.iloc[idx_list, :].reset_index(drop = True).sort_values(by = 'pitch_type', axis = 0)
+    results2 = results.iloc[idx_list, :].reset_index(drop = True).sort_values(by = 'pitch_type', axis = 0) # Sort so grouped pitch types between pitchers are the same
 
     number_of_clusters = results2['cluster'].unique()
-
+    
+    #  
     mapper = {}
     for cluster in number_of_clusters:
         mapper[cluster] = ''
@@ -87,6 +96,7 @@ def cluster_pitch_types(df_path):
     final_mapper = dict(zip(results2['pitch_type'], results2['group']))
 
     df2['group_pitch_type'] = df2['pitch_type'].map(final_mapper)
+    df2['prior_group_pitch_type'] = df2['prior_pitch'].map(final_mapper)
     
     return df2
 

@@ -49,7 +49,7 @@ for pitcher in args.input:
         df = pd.DataFrame(data, columns = percent_df.columns.values)
         percent_df = percent_df.append(df)
     
-    # Drop pitch types that are in train but not test -> inner join will handle this
+    # Drop pitch types that are in train but not test
     drop = []
     for pitch in train_pitches:
         if pitch not in test_pitches:
