@@ -6,6 +6,17 @@ import sys
 pd.set_option('max.rows', 500)
 
 df = pd.read_csv('individual_df/fe/279571_fe.csv')
+
+ # hand difference
+def same_hand(row):
+    if row['p_handedness'] == row['b_handedness']:
+        return 1
+    else:
+        return 0
+
+df['hand'] = df.apply(same_hand, axis = 1)
+
+print(df[['p_handedness', 'b_handedness', 'hand']])
 ##### Global Pitch Frequencies #####
 
 # Create columns and lists for each pitch type

@@ -12,30 +12,21 @@ args = parser.parse_args()
 
 for pitcher in args.input:
     print(pitcher)
+    sys.stdout.flush()
     df = pd.read_csv(pitcher)
     
     df = df.loc[~((df['group_pitch_type'].isnull()) & (df['year'] == 2014)), :].reset_index(drop = True)
 
-    # Replace NA values for prior pitch, prior_px, prior_py
-    #df['prior_py'].replace(np.inf, np.nan, inplace = True)
-    #df['prior_px'].replace(np.inf, np.nan, inplace = True)
-    #df['prior_pitch'].replace('', np.nan, inplace = True)
-    #
-    #mean_px = df.loc[df['train_test'] == 'train', 'prior_px'].mean()
-    #mean_py = df.loc[df['train_test'] == 'train', 'prior_py'].mean()
-    #mode_type = df.loc[df['train_test'] == 'train', 'prior_pitch'].mode()[0]
-    #
-    #df['prior_py'].replace(np.nan, mean_py, inplace = True)
-    #df['prior_px'].replace(np.nan, mean_px, inplace = True)
-    #df['prior_pitch'].replace(np.nan, mode_type, inplace = True)
-    
     # Count
     df['count'] = df['ball_count'].astype(str) + '-' + df['strike_count'].astype(str)
+
+    drop = ['ball_count', 'strike_count']
+    df.drop(drop, axis = 1, inplace = True)
     
     # Function to return index of column
     def column_idx(df, column_name):
         return df.columns.values.tolist().index(column_name)
-    
+
     # Score difference (from the pitchers perspective)
     def score_diff(row):
         if row['inning_half'] == 'top':
@@ -44,46 +35,54 @@ for pitcher in args.input:
             return row['away_runs'] - row['home_runs']
     
     df['score_diff'] = df.apply(score_diff, axis = 1)
-    
+
+    drop = ['home_runs', 'away_runs']
+    df.drop(drop, axis = 1, inplace = True)
+   
+    # hand difference
+    def same_hand(row):
+        if row['p_handedness'] == row['b_handedness']:
+            return 1
+        else:
+            return 0
+
+    df['hand'] = df.apply(same_hand, axis = 1)
+
+    drop = ['p_handedness', 'b_handedness']
+    df.drop(drop, axis = 1, inplace = True)
+
     ##### Global Pitch Frequencies #####
-    
-    # Find 2014 frequencies
-    temp = df.loc[df['year'] == 2014, :]
-    pitch_freq = temp.groupby('group_pitch_type')['home_team'].count().reset_index()
-    pitch_freq.rename(columns = {'home_team':'count'}, inplace = True)
-    pitch_types_2014 = pitch_freq['group_pitch_type'].values.tolist()
-    
-    temp2 = df.loc[df['train_test'] == 'train', :]
-    train_pitch_types = df['group_pitch_type'].unique().tolist()
-    
+    # Create columns and lists for each pitch type
+    u_pitches = df['group_pitch_type'].unique()
     pitch_count_dict = {}
     prior_columns = []
-    for pitch_type in train_pitch_types:
-        print(pitch_type)
-        sys.stdout.flush()
+    weighted_count_dict = {}
+    weighted_cols = []
+    
+    for pitch_type in u_pitches:
         col_name = 'global_prior_' + pitch_type
         prior_columns.append(col_name)
-        if pitch_type in pitch_types_2014:
-            pitch_count_dict[pitch_type] = pitch_freq.loc[pitch_freq['group_pitch_type'] == pitch_type, 'count'].values[0]
-        else:
-            pitch_count_dict[pitch_type] = 0
+        pitch_count_dict[pitch_type] = 0
+        df[col_name] = np.nan
+        df.loc[0, col_name] = 0
     
-    # Create null columns for each pitch type
-    for col in prior_columns:
-        df[col] = np.nan
-    
-    i = temp2.index.values[0] # First pitch of 2015
-    while i < df.index.values[-1]:
+        weighted_name = col_name + '_weighted'
+        weighted_cols.append(weighted_name)
+        weighted_count_dict[weighted_name] = 0
+        df[weighted_name] = np.nan
+        df.loc[0, weighted_name] = 0
+    print('prior to first loop')
+    sys.stdout.flush()
+    # loop through df, updating prior cols and weighted cols, window cols
+    i = 0
+    while i < len(df) - 1:
         pitch_type = df.loc[i, 'group_pitch_type']
         column_name = 'global_prior_' + pitch_type
-        if pitch_type in pitch_count_dict:
-            pitch_count_dict[pitch_type] += 1
-            df.loc[i+1, column_name] = pitch_count_dict[pitch_type]
-        else: # Have not checked this code for new pitch types in test set
-            pitch_count_dict[pitch_type] = 0
-            df[column_name] = np.nan
-            prior_columns.append(column_name)
-            continue
+        weighted_name = column_name + '_weighted'
+        pitch_count_dict[pitch_type] += 1
+        weighted_count_dict[weighted_name] += i + 1
+        df.loc[i+1, column_name] = pitch_count_dict[pitch_type]
+        df.loc[i+1, weighted_name] = weighted_count_dict[weighted_name]
         
         i += 1
     
@@ -92,21 +91,107 @@ for pitcher in args.input:
         df[col].fillna(method = 'ffill', inplace = True)
         df[col].fillna(method = 'bfill', inplace = True)
     
-    totals = df.loc[:, prior_columns].sum(axis = 1)
-    df['total_pitches'] = totals
+        weighted_col =  col + '_weighted'
+        df[weighted_col].fillna(method = 'ffill', inplace = True)
+        df[weighted_col].fillna(method = 'bfill', inplace = True)
+    
+    df['total_pitches'] = df[prior_columns].sum(axis = 1)
+    df['weighted_total_pitches'] = df[weighted_cols].sum(axis = 1)
     
     # Create global percentage columns
     for col in prior_columns:
-        column_name = col + '_percent'
+        column_name = 'a_' + col + '_percent'
         df[column_name] = df[col]/df['total_pitches']
     
-    #years = [2015, 2016, 2017]
-    #temp = df.loc[df['year'].isin(years), ['year', 'global_prior_SL_percent', 'global_prior_IN_percent', 'global_prior_CH_percent', \
-    #                                       'global_prior_FT_percent', 'global_prior_FF_percent']].reset_index(drop = True).reset_index()
-    #
-    #temp2.rename(columns = {'index':'pitch_id'}, inplace = True)
-    #temp2 = pd.melt(temp2, id_vars = ['pitch_id', 'year'])
-    #temp2.to_csv('visualisations/pitch_frequencies/pitch_freq.csv', index = False)
+        weighted_col = col + '_weighted'
+        percent_col = 'b_' + weighted_col + '_percent'
+        df[percent_col] = df[weighted_col]/df['weighted_total_pitches']
+    
+    
+    ##### Pitch Frequencies in windows #####
+    w_40 = np.array([])
+    w_120 = np.array([])
+    w_360 = []
+    w_40_cols = []
+    w_120_cols = []
+    w_360_cols = []
+    w_40_percent_cols = []
+    w_120_percent_cols = []
+    w_360_percent_cols = []
+    
+    for pitch_type in u_pitches:
+        col_name = 'w_40_' + pitch_type
+        w_40_cols.append(col_name)
+        df[col_name] = 0
+    
+        col_name2 = 'w_120_' + pitch_type
+        w_120_cols.append(col_name2)
+        df[col_name2] = 0
+    
+        col_name3 = 'w_360_' + pitch_type
+        w_360_cols.append(col_name3)
+        df[col_name3] = 0
+    
+    
+    i = 0
+    w_40_full = False
+    w_120_full = False
+    w_360_full = False
+    print('Before window loop')
+    sys.stdout.flush()
+    while i < len(df) - 1:
+        pitch_type = df.loc[i, 'group_pitch_type']
+        col_name = 'w_40_' + pitch_type
+        col_name2 = 'w_120_' + pitch_type
+        col_name3 = 'w_360_' + pitch_type
+    
+        temp = np.array([pitch_type])
+        w_40 = np.append(w_40, temp)
+        w_120 = np.append(w_120, temp)
+        w_360 = np.append(w_360, temp)
+    
+        if len(w_40) > 40:
+            w_40_full = True
+        if len(w_120) > 120:
+            w_120_full = True
+        if len(w_360) > 360:
+            w_360_full = True
+    
+        if w_40_full == True:
+            w_40 = w_40[1:] 
+        if w_120_full == True:
+            w_120 = w_120[1:]
+        if w_360_full == True:
+            w_360 = w_360[1:]
+    
+        for col in w_40_cols:
+            pitch = col.split('_')[-1]
+            df.loc[i + 1, col] = len(w_40[w_40 == pitch])
+    
+        for col in w_120_cols:
+            pitch = col.split('_')[-1]
+            df.loc[i + 1, col] = len(w_120[w_120 == pitch])
+    
+        for col in w_360_cols:
+            pitch = col.split('_')[-1]
+            df.loc[i + 1, col] = len(w_360[w_360 == pitch])
+    
+    
+        i += 1
+    print('after window loop')
+    sys.stdout.flush()
+    for col in w_40_cols:    
+        percent_col = 'c_' + col + '_percent'
+        df[percent_col] = df[col]/40
+    
+    for col in w_120_cols:    
+        percent_col = 'd_' + col + '_percent'
+        df[percent_col] = df[col]/120
+    
+    for col in w_360_cols:    
+        percent_col = 'e_' + col + '_percent'
+        df[percent_col] = df[col]/360
+    
     
     # Priors to the specific batter
     batter_specific_cols = []
@@ -114,9 +199,10 @@ for pitcher in args.input:
     for col in prior_columns:
         col_name = col + '_to_batter'
         batter_specific_cols.append(col_name)
-        df[col_name] = 0.0
+        df[col_name] = np.nan
     
-    
+    print('before to batter loop')
+    sys.stdout.flush()
     batter_priors = {}
     i = 0
     while i < len(df):
@@ -125,7 +211,7 @@ for pitcher in args.input:
     
         if batter in batter_priors:
             for col in batter_specific_cols:
-                for p_type in train_pitch_types:
+                for p_type in u_pitches:
                     if p_type in col:
                         df.loc[i, col] = batter_priors[batter][p_type]
                         break
@@ -134,23 +220,39 @@ for pitcher in args.input:
     
         else:
             batter_priors[batter] = {}
-            for pitch in train_pitch_types: # If they add a new pitch between train and test, too bad.
+            for pitch in u_pitches: # If they add a new pitch between train and test, too bad.
                 batter_priors[batter][pitch] = 0.0
     
             continue
     
         i += 1
-    
+    print('after to batter loop')
+    sys.stdout.flush()
     df['batter_specific_count'] = df.loc[:, batter_specific_cols].sum(axis = 1)
     
     for col in batter_specific_cols:
-         column_name = col + '_percent'
-         df[column_name] = df[col]/df['batter_specific_count']
+        df[col].fillna(method = 'ffill', inplace = True)
+        df[col].fillna(method = 'bfill', inplace = True)
+    
+    for col in batter_specific_cols:
+        beta = 6
+        column_name = col + '_percent'
+        pitch = column_name.split('_')[2]
+        hist_prior_col = 'e_w_360_{}_percent'.format(pitch)
+        hist_prior = df[hist_prior_col]
+        batter_prior = df[col]/df['batter_specific_count']
+    
+        weighted_col = 'f_' + column_name + '_weighted'
+        df[weighted_col] = (df['batter_specific_count']*batter_prior + beta * hist_prior)/(df['batter_specific_count'] + beta)
     
     df.drop(prior_columns, axis = 1, inplace = True)
+    df.drop(weighted_cols, axis = 1, inplace = True)
+    df.drop(w_40_cols, axis = 1, inplace = True)
+    df.drop(w_120_cols, axis = 1, inplace = True)
+    df.drop(w_360_cols, axis = 1, inplace = True)
     df.drop(batter_specific_cols, axis = 1, inplace = True)
     df.drop(['total_pitches'], axis = 1, inplace = True)
-    
+   
     ##### Looking at runners on base #####
     df['runners_on'] = df['on_first'].astype(int) + df['on_second'].astype(int) + df['on_third'].astype(int)
     df['weighted_runners_on'] = df['on_first'].astype(int) + 2*df['on_second'].astype(int) + 3*df['on_third'].astype(int)
@@ -165,6 +267,7 @@ for pitcher in args.input:
     
     df['home_or_away'] = df['inning_half'].apply(home_or_away)
     
+    print(df.columns.values)
 
     # Save dataframe as csv
     pitcher_num = df['pitcher_id'].unique()[0]
