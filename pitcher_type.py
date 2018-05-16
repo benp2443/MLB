@@ -4,6 +4,12 @@ import sys
 
 df = pd.read_csv('mlb_gd_full.csv')
 
+
+# Create year column
+df['year'] = df['game_id'].str[4:8].astype(int)
+pitcher_2017 = df.loc[df['year'] == 2017, 'pitcher_id'].unique()
+print(len(pitcher_2017))
+aa
 starters = []
 
 # Simplyfy it to starters vs relievers
@@ -59,8 +65,6 @@ df['StartVsRelief'] = df['pitcher_id'].apply(StartVsRelief)
 # Create list of pitcher id's
 pitchers_list = df['pitcher_id'].unique().tolist()
 
-# Create year column
-df['year'] = df['game_id'].str[4:8].astype(int)
 
 # Create dataframe which has the pitcher id, year, and number of pitchers thrown in each row
 pitcher_count = df.groupby(['pitcher_id', 'year'])['home_team'].count().reset_index()

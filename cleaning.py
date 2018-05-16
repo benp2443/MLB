@@ -339,10 +339,55 @@ df['prior_pitch'].replace(np.nan, mode_type, inplace = True)
 
 columns = df.columns.values.tolist()
 
-print(columns)
+###### Starters vs Closers ######
+# Flag the start of a new game
+df.reset_index(drop = True, inplace = True)
+
+df['game_shift'] = df['game_id'].shift(1).fillna(df['game_id'])
+df['new_game'] = df['game_id'] != df['game_shift']
+new_game_idx = df.loc[df['new_game'] == True, :].index.values.tolist()
+
+if df.loc[0, 'inning_half'] == 'top' and df.loc[0, 'inning'] == 1 and df.loc[0, 'ab_game_num'] == 1:
+    df.loc[0, 'new_game'] = True
+    new_game_idx_list = [0] + new_game_idx
+else:
+    new_game_idx_list = new_game_idx
+
+starters = []
+for idx in new_game_idx_list:
+    inning = df.loc[idx, 'inning']
+    if inning != 1:
+        continue
+    
+    pitcher = df.loc[idx, 'pitcher_id']
+    if pitcher not in starters:
+        starters.append(pitcher)
+
+    i = idx + 3
+    while inning == 1:
+        inning = df.loc[i, 'inning']
+        inning_h = df.loc[i, 'inning_half']
+        if inning_h == 'bottom':
+            pitcher = df.loc[i, 'pitcher_id']
+            if pitcher not in starters:
+                starters.append(pitcher)
+                
+            break
+                
+                
+        i += 1
+
+# Tag the starters vs relievers
+def StartVsRelief(pitcher_id):
+    if pitcher_id in starters:
+        return 'Starter'
+    else:
+        return 'Reliever'
+
+df['StartVsRelief'] = df['pitcher_id'].apply(StartVsRelief)
 
 print('Null Values', '\n')
-for col in columns:
+for col in df.columns.values.tolist():
     null_values = df[col].isnull().sum()
     if null_values > 0:
         print(col)
