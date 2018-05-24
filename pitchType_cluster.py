@@ -71,11 +71,11 @@ def cluster_pitch_types(df_path):
     for pitch in pitch_types:
         idx_list.append(pitch_grouping[pitch]['idx'])
 
-    results2 = results.iloc[idx_list, :].reset_index(drop = True).sort_values(by = 'pitch_type', axis = 0) # Sort so grouped pitch types between pitchers are the same
+    results2 = results.iloc[idx_list, :].reset_index(drop = True).sort_values(by = 'pitch_type', axis = 0) # Sorted so grouped pitch types between pitchers are the same
 
     number_of_clusters = results2['cluster'].unique()
     
-    #  
+    # 
     mapper = {}
     for cluster in number_of_clusters:
         mapper[cluster] = ''
@@ -90,14 +90,62 @@ def cluster_pitch_types(df_path):
             mapper[cluster] += '-' + pitch_type
 
         i += 1
-                
+    
+    # If 'CH' is joined before any of the following - 'FF', 'FT', 'FC', 'SL', 'CU', disconnect it from the group and put by itself
     results2['group'] = results2['cluster'].map(mapper)
 
     final_mapper = dict(zip(results2['pitch_type'], results2['group']))
 
+    drop_if_in = ['FF', 'FT', 'FC', 'SL', 'CU']
+    # UGLY -> Find a better way!
+    if 'CH' in pitch_types:
+        for key in final_mapper:
+            pitch = key
+            group = final_mapper[key]
+            if 'CH' in group:
+                types = group.split('-')
+                number_pitches = len(types)
+                i = 1
+                while i < number_pitches:
+                    if types[i] in drop_if_in:
+                        final_mapper['CH'] = 'CH'
+                        if pitch != 'CH':
+                            final_mapper[key] = group[3:]
+                            
+                    i += 1
+
+
+    if 'FF' in pitch_types and 'SL' in pitch_types:
+        if final_mapper['FF'] == 'FF-SL':
+            final_mapper['FF'] = 'FF'
+            final_mapper['SL'] = 'SL'
+
+    if 'CU' in pitch_types and 'FF' in pitch_types and 'FT' in pitch_types:
+        if final_mapper['FF'] == 'CU-FF-FT':
+            final_mapper['FF'] = 'FF-FT'
+            final_mapper['FT'] = 'FF-FT'
+            final_mapper['CU'] = 'CU'
+
+    if 'FT' in pitch_types and 'SL' in pitch_types:
+        if final_mapper['FT'] == 'FT-SL':
+            final_mapper['FT'] = 'FT'
+            final_mapper['SL'] = 'SL'
+
+    if 'FC' in pitch_types and 'FF' in pitch_types and 'SL' in pitch_types:
+        if final_mapper['FF'] == 'FC-FF-SL':
+            final_mapper['FF'] = 'FF'
+            final_mapper['FC'] = 'FC-SL'
+            final_mapper['SL'] = 'FC-SL'
+
+    if 'FF' in pitch_types and 'FT' in pitch_types:
+        if final_mapper['FF'] == 'FF' and final_mapper['FT'] == 'FT':
+            final_mapper['FF'] = 'FF-FT'
+            final_mapper['FT'] = 'FF-FT'
+
+
     df2['group_pitch_type'] = df2['pitch_type'].map(final_mapper)
     df2['prior_group_pitch_type'] = df2['prior_pitch'].map(final_mapper)
-    
+
     return df2
 
 for pitcher in args.input:
