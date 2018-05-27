@@ -21,13 +21,13 @@ pitch_viz <- function(df, saveas) {
 		stat_ellipse() +
 		labs(x = 'Horizontal Movement', y = 'Pitch Speed (MPH)')
 
-	plot_3 <- ggplot(temp, aes(x = pfx_x, y = pfx_y, color = group_pitch_type_2)) +
+	plot_3 <- ggplot(temp, aes(x = pfx_x, y = pfx_y, color = group_pitch_type)) +
 		geom_point(shape = 1) +
                 labs(colour = "") +
 		stat_ellipse() +
 		labs(x = 'Horizontal Movement', y = 'Vertical Movement')
 
-	plot_4 <- ggplot(temp, aes(x = pfx_x, y = start_speed, color = group_pitch_type_2)) +
+	plot_4 <- ggplot(temp, aes(x = pfx_x, y = start_speed, color = group_pitch_type)) +
 		geom_point(shape = 1) + 
                 labs(colour = "") +
 		stat_ellipse() +
@@ -56,13 +56,13 @@ for (i in args) {
     lists = strsplit(i, '/')
     player = lists[[1]][5]
     player_num = strsplit(player, '_')
-    saveas = paste(player_num[[1]][1], 'pitch_group_2.pdf', sep = '_')
+    saveas = paste(player_num[[1]][1], 'pitch_group_3.pdf', sep = '_')
     pitch_viz(df, saveas)
 
     # Pitch confidence densities
-    conf_denst = pitch_density(df)
-    saveas = paste(player_num[[1]][1], 'pitch_conf_density.pdf', sep = '_')
-    ggsave(filename = saveas, plot = conf_denst)
+    #conf_denst = pitch_density(df)
+    #saveas = paste(player_num[[1]][1], 'pitch_conf_density.pdf', sep = '_')
+    #ggsave(filename = saveas, plot = conf_denst)
 
 }
 
