@@ -15,8 +15,8 @@ parser.add_argument('--input', nargs = '+', help = 'input data path')
 args = parser.parse_args()
 
 pitch_groupings = {}
+pitch_type_count = {}
 for pitcher in args.input:
-    print(pitcher)
     df = pd.read_csv(pitcher)
     groupings = df['group_pitch_type'].unique().tolist()
     for group in groupings:
@@ -25,12 +25,27 @@ for pitcher in args.input:
         else:
             pitch_groupings[group] = 1
 
+    pitch_types = df['pitch_type'].unique().tolist()
+    for pitch in pitch_types:
+        if pitch in pitch_type_count:
+            pitch_type_count[pitch] += 1
+        else:
+            pitch_type_count[pitch] = 1
 
 dictlist = []
 for key, value in pitch_groupings.items():
     temp = [key,value]
     dictlist.append(temp)
-   
+
+pitchlist = []
+for key, value in pitch_type_count.items():
+    temp = [key,value]
+    pitchlist.append(temp)
+
+
 df = pd.DataFrame(dictlist, columns = ['group', 'count'])
-df.to_csv('visualisations/pitch_types/pitch_groupings.csv', index = False)
+df.to_csv('visualisations/pitch_types/pitch_groupings_2.csv', index = False)
+
+df = pd.DataFrame(pitchlist, columns = ['pitch_type', 'count'])
+df.to_csv('visualisations/pitch_types/pitch_types_count.csv', index = False)
 
