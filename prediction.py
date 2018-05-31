@@ -23,18 +23,27 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--input', nargs = '+', help = 'input data path')
 args = parser.parse_args()
 
-final_df = pd.DataFrame(columns = ['pitcher_id', 'rf', 'ovo_rbf_svm', 'pitch_vol', 'ave_conf', 'sd_conf', 'train_size', 'unique_pitches'])
-
+final_df = pd.DataFrame(columns = ['pitcher_id', 'rf', 'pitch_vol', 'ave_conf', 'sd_conf', 'train_size', 'unique_pitches', 'start_relief'])
+cut_pitchers = 0
 for pitcher in args.input:
 
     print(pitcher)
     sys.stdout.flush()
     df = pd.read_csv(pitcher)
     pitcher = df['pitcher_id'].unique()[0]
+    s_or_r = df['StartVsRelief'].unique()[0]
 
     ## Create train_test column -> put this in feature eng
     train_test = {2015:'train', 2016:'train', 2017:'test'}
     df['train_test'] = df['year'].map(train_test)
+
+    #df = df.loc[df['type_confidence'] >= 1.5, :]
+    #new_counts = df.groupby('year')['home_team'].count().reset_index()
+    #u_years = new_counts['year'].unique()
+
+    #if 2016 not in u_years or 2017 not in u_years:
+    #    cut_pitchers += 1
+    #    continue
 
     ave_confidence = np.mean(df.loc[df['train_test'] == 'train', 'type_confidence']/2)
     sd_confidence = np.std(df.loc[df['train_test'] == 'train', 'type_confidence']/2)
@@ -43,17 +52,17 @@ for pitcher in args.input:
     drop = ['Unnamed: 0', 'game_id', 'game_type', 'home_team', 'home_league', \
             'away_team', 'away_league', 'stadium', 'city', 'inning', 'inning_half', \
             'ab_game_num', 'batter_id', 'pitcher_id', 'ab_event_number', 'ab_event', \
-            'home_runs', 'away_runs', 'p_description', 'type_', 'event_num', \
+            'p_description', 'type_', 'event_num', 'game_shift', 'StartVsRelief', \
             'start_speed', 'sz_top', 'sz_bot', 'pfx_x', 'pfx_y', 'px', 'py', \
-            'pitch_type', 'type_confidence', 'zone', 'strike_count', 'ball_count', \
-            'pitch_sequence', 'outs', 'batter_specific_count', 'p_handedness', 'prior_pitch']
+            'pitch_type', 'type_confidence', 'zone', 'weighted_total_pitches',\
+            'pitch_sequence', 'outs', 'batter_specific_count', 'prior_pitch','new_game']
     
     df.drop(drop, axis = 1, inplace = True)
     df = df.loc[df['year'] != 2014, :]
     df.replace(np.inf, np.nan, inplace = True)
     df.fillna(method = 'ffill', inplace = True)
     df.fillna(method = 'bfill', inplace = True)
-    
+
     cat_vars = df.select_dtypes(include = ['object']).columns.tolist()
     cat_vars.remove('group_pitch_type')
     
@@ -62,8 +71,6 @@ for pitcher in args.input:
         df = pd.concat([df, dummies], axis = 1)
         df.drop(col, axis = 1, inplace = True)
     
-    print(df.columns.values)
-    a
     ## Create train_test column -> put this in feature eng
     train_test = {2015:'train', 2016:'train', 2017:'test'}
     df['train_test'] = df['year'].map(train_test)
@@ -73,13 +80,15 @@ for pitcher in args.input:
     y_train = df.loc[df['train_test'] == 'train', 'group_pitch_type']
     temp = df.drop(['group_pitch_type'], axis = 1)
     X_train = temp.loc[temp['train_test'] == 'train', :]
-    
+    #if len(X_train) < 200:
+    #    continue
     y_test = df.loc[df['train_test'] == 'test', 'group_pitch_type']
     X_test = temp.loc[temp['train_test'] == 'test', :]
     
     X_train.drop(['train_test'], axis = 1, inplace = True)
     X_test.drop(['train_test'], axis = 1, inplace = True)
-    
+    #if len(X_test) < 100:
+    #    continue
     train_counts = y_train.value_counts().reset_index()
     most_freq = train_counts.iloc[0,0]
     naive_preds = np.repeat(most_freq, len(y_test))
@@ -132,11 +141,13 @@ for pitcher in args.input:
     def number_pitch_types(y_train_array):
         return len(np.unique(y_train_array))
 
-    def prediction(model, others_boolean, kfold_object = kf, training_array = X_train, naive_pred = most_freq):
+    def prediction(model, others_boolean, model_name = 'rf', kfold_object = kf, training_array = X_train, naive_pred = most_freq):
         accuracy_list = []
         vol_list = []
         train_size_list = []
         number_pitches_list = []
+        feature_importances = []
+
         for train_index, test_index in kf.split(training_array):
             X_training = X_train[train_index, :]
             y_training = y_train.values[train_index]
@@ -154,6 +165,9 @@ for pitcher in args.input:
             acc_comp = acc - naive_acc
             accuracy_list.append(acc_comp)
 
+            if model_name == 'rf':
+                feature_importances.append(model.feature_importances_)
+
             others = others_boolean
             if others == True:
                 vol = pitch_volatility(y_training, y_val)
@@ -166,30 +180,28 @@ for pitcher in args.input:
                 number_pitches_list.append(number_pitches)
 
         if others == True:
-            return np.mean(accuracy_list), np.mean(vol_list), np.mean(train_size_list), np.mean(number_pitches_list)
+            return np.mean(accuracy_list), np.mean(vol_list), np.mean(train_size_list), np.mean(number_pitches_list), feature_importances
         else:
             return np.mean(accuracy_list)
     
 
     # Random Forest
-    clf = RandomForestClassifier(n_estimators = 50, random_state = 1)
-    rf_comp, vol, train_size, u_pitches = prediction(model = clf, others_boolean = True)
-    print(rf_comp)
-    print(vol)
-    # SVM - radial basis function
-    clf = OneVsOneClassifier(svm.SVC(kernel = 'rbf', class_weight = 'balanced'))
-    svm2_comp = prediction(model = clf, others_boolean = False)
-    print(svm2_comp)
+    clf = RandomForestClassifier(n_estimators = 100, random_state = 1)
+    rf_comp, vol, train_size, u_pitches, fe = prediction(model = clf, others_boolean = True)
 
-    temp = pd.DataFrame([[pitcher, rf_comp, svm2_comp, vol, ave_confidence, sd_confidence, train_size, u_pitches]], \
-                         columns = ['pitcher_id', 'rf', 'ovo_rbf_svm', 'pitch_vol', 'ave_conf', 'sd_conf', 'train_size', 'unique_pitches'])
-    print(temp)
+    # SVM - radial basis function
+    #clf = OneVsOneClassifier(svm.SVC(kernel = 'rbf', class_weight = 'balanced'))
+    #svm2_comp = prediction(model = clf, others_boolean = False)
+
+    temp = pd.DataFrame([[pitcher, rf_comp, vol, ave_confidence, sd_confidence, train_size, u_pitches, s_or_r]], \
+                         columns = ['pitcher_id', 'rf', 'pitch_vol', 'ave_conf', 'sd_conf', 'train_size', 'unique_pitches', 'start_relief'])
     
     final_df = pd.concat([final_df, temp], ignore_index = True)
-    print(final_df)
+
+    print(fe)
 
 print(final_df)
-final_df.to_csv('test_preds.csv', index = False)
+final_df.to_csv('test.csv', index = False)
   
 #    # AdaBoost
 #    clf = AdaBoostClassifier(base_estimator = RandomForestClassifier(n_estimators = 1), n_estimators = 200, random_state = 1)

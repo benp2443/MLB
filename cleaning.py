@@ -4,7 +4,7 @@ import sys
 
 pd.set_option('max.rows', 500)
 
-df = pd.read_csv('mlb_gd_full.csv')
+df = pd.read_csv('mlb_gb_full.csv')
 
 ##### Filter pitchers #####
 

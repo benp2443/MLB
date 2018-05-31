@@ -71,8 +71,7 @@ for pitcher in args.input:
         weighted_count_dict[weighted_name] = 0
         df[weighted_name] = np.nan
         df.loc[0, weighted_name] = 0
-    print('prior to first loop')
-    sys.stdout.flush()
+
     # loop through df, updating prior cols and weighted cols, window cols
     i = 0
     while i < len(df) - 1:
@@ -137,8 +136,7 @@ for pitcher in args.input:
     w_40_full = False
     w_120_full = False
     w_360_full = False
-    print('Before window loop')
-    sys.stdout.flush()
+
     while i < len(df) - 1:
         pitch_type = df.loc[i, 'group_pitch_type']
         col_name = 'w_40_' + pitch_type
@@ -178,8 +176,7 @@ for pitcher in args.input:
     
     
         i += 1
-    print('after window loop')
-    sys.stdout.flush()
+
     for col in w_40_cols:    
         percent_col = 'c_' + col + '_percent'
         df[percent_col] = df[col]/40
@@ -201,8 +198,6 @@ for pitcher in args.input:
         batter_specific_cols.append(col_name)
         df[col_name] = np.nan
     
-    print('before to batter loop')
-    sys.stdout.flush()
     batter_priors = {}
     i = 0
     while i < len(df):
@@ -226,8 +221,7 @@ for pitcher in args.input:
             continue
     
         i += 1
-    print('after to batter loop')
-    sys.stdout.flush()
+
     df['batter_specific_count'] = df.loc[:, batter_specific_cols].sum(axis = 1)
     
     for col in batter_specific_cols:
@@ -267,8 +261,6 @@ for pitcher in args.input:
     
     df['home_or_away'] = df['inning_half'].apply(home_or_away)
     
-    print(df.columns.values)
-
     # Save dataframe as csv
     pitcher_num = df['pitcher_id'].unique()[0]
     print(pitcher_num)
