@@ -18,8 +18,10 @@ if len(args.input) > 1:
 else:
     df = pd.read_csv(args.input[0])
 
+print(np.mean(df.rf))
 df['best_model'] = df[['rf', 'svm']].idxmax(axis = 1)
 df['max_value'] = df[['rf', 'svm']].max(axis = 1)
+print(np.mean(df.rf))
 
 def pos_neg(x):
     if x > 0.0:
@@ -54,3 +56,16 @@ print(df['difference'].mean())
 print(df.groupby('best_model')['difference'].mean().reset_index())
 
 df.to_csv('visualisations/model_analysis/test.csv')
+
+df = pd.read_csv('feature_importance_all.csv')
+print(df.head())
+print(df.shape)
+
+median_list = np.median(df, axis = 0) #.sort_values(ascending = False)
+print(median_list)
+median_series = pd.Series(median_list, df.columns.values).sort_values(ascending = False)
+print(median_series)
+df = df[median_series.index.tolist()]
+
+df = df.melt()
+df.to_csv('feature_importance_ordered.csv', index = False)

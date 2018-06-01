@@ -24,7 +24,7 @@ parser.add_argument('--input', nargs = '+', help = 'input data path')
 args = parser.parse_args()
 
 final_df = pd.DataFrame(columns = ['pitcher_id', 'rf', 'pitch_vol', 'ave_conf', 'sd_conf', 'train_size', 'unique_pitches', 'start_relief'])
-cut_pitchers = 0
+feature_importance_list = []
 for pitcher in args.input:
 
     print(pitcher)
@@ -34,6 +34,7 @@ for pitcher in args.input:
     s_or_r = df['StartVsRelief'].unique()[0]
 
     ## Create train_test column -> put this in feature eng
+    df = df.loc[df['year'] != 2014, :]
     train_test = {2015:'train', 2016:'train', 2017:'test'}
     df['train_test'] = df['year'].map(train_test)
 
@@ -48,34 +49,29 @@ for pitcher in args.input:
     ave_confidence = np.mean(df.loc[df['train_test'] == 'train', 'type_confidence']/2)
     sd_confidence = np.std(df.loc[df['train_test'] == 'train', 'type_confidence']/2)
 
-    # Drop unwanted columns and 2014 -> make this cleaner through he pipeline
+    # Drop unwanted columns and 2014 -> make this cleaner through the pipeline
     drop = ['Unnamed: 0', 'game_id', 'game_type', 'home_team', 'home_league', \
             'away_team', 'away_league', 'stadium', 'city', 'inning', 'inning_half', \
             'ab_game_num', 'batter_id', 'pitcher_id', 'ab_event_number', 'ab_event', \
             'p_description', 'type_', 'event_num', 'game_shift', 'StartVsRelief', \
-            'start_speed', 'sz_top', 'sz_bot', 'pfx_x', 'pfx_y', 'px', 'py', \
+            'start_speed', 'sz_top', 'sz_bot', 'pfx_x', 'pfx_y', 'px', 'py', 'year',\
             'pitch_type', 'type_confidence', 'zone', 'weighted_total_pitches',\
             'pitch_sequence', 'outs', 'batter_specific_count', 'prior_pitch','new_game']
     
     df.drop(drop, axis = 1, inplace = True)
-    df = df.loc[df['year'] != 2014, :]
     df.replace(np.inf, np.nan, inplace = True)
     df.fillna(method = 'ffill', inplace = True)
     df.fillna(method = 'bfill', inplace = True)
 
     cat_vars = df.select_dtypes(include = ['object']).columns.tolist()
     cat_vars.remove('group_pitch_type')
-    
+    cat_vars.remove('train_test')
+   
     for col in cat_vars:
         dummies = pd.get_dummies(df[col], prefix = col, drop_first = True)
         df = pd.concat([df, dummies], axis = 1)
         df.drop(col, axis = 1, inplace = True)
-    
-    ## Create train_test column -> put this in feature eng
-    train_test = {2015:'train', 2016:'train', 2017:'test'}
-    df['train_test'] = df['year'].map(train_test)
-    df.drop(['year'], axis = 1, inplace = True)
-    
+
     ## Find X and y variables for train and test
     y_train = df.loc[df['train_test'] == 'train', 'group_pitch_type']
     temp = df.drop(['group_pitch_type'], axis = 1)
@@ -93,7 +89,29 @@ for pitcher in args.input:
     most_freq = train_counts.iloc[0,0]
     naive_preds = np.repeat(most_freq, len(y_test))
     naive_acc = np.sum(naive_preds == y_test.values)/float(len(y_test))
-    
+
+    fi_cols = ['on_first', 'on_second', 'on_third', 'outs', 'pitch_count', \
+               'ab_pitch_count', 'prior_px', 'prior_py', 'score_diff', 'hand', \
+               'a_global_PP', 'b_global_weighted_PP', 'c_40_PP', 'd_120_PP', \
+               'e_360_PP', 'f_PP_to_batter', 'runner_on', 'weighted_runners_on', \
+               'prior_group_pitch_type', 'count_', 'home_or_away_']
+
+    cols = X_train.columns.values.tolist()
+
+    dummys = ['a_', 'b_', 'c_', 'd_', 'e_', 'f_', 'prior_group_pitch_type', 'count_']
+
+    dummys_idx_dict = {}
+
+    for dummy in dummys:
+        for col in cols:
+
+            if col.startswith(dummy):
+                idx = cols.index(col)
+                if dummy in dummys_idx_dict:
+                    dummys_idx_dict[dummy] += [idx]
+                else:
+                    dummys_idx_dict[dummy] = [idx]
+
     # Feature scaling
     sc = StandardScaler()
     X_train = sc.fit_transform(X_train)
@@ -101,12 +119,12 @@ for pitcher in args.input:
 
     kf = KFold(n_splits = 5)
 
-    def no_seperation(naive_prediction, model_predictions):
-        similiarity = np.sum(naive_preds == model_predictions)/float(len(model_predictions))
-        if similiarity > 0.95:
-            return similiarity
-        else:
-            return - 1
+#    def no_seperation(naive_prediction, model_predictions):
+#        similiarity = np.sum(naive_preds == model_predictions)/float(len(model_predictions))
+#        if similiarity > 0.95:
+#            return similiarity
+#        else:
+#            return - 1
 
     def return_acc(similarity, model_accuracy, naive_accuracy = naive_acc):
         if similarity == -1:
@@ -160,13 +178,16 @@ for pitcher in args.input:
 
             model.fit(X_training, y_training)
             preds = model.predict(X_val)
+            preds_proba = model.predict_proba(X_val)
             
+            correct_pred = preds == y_val
+
             acc = accuracy(preds, y_val)
             acc_comp = acc - naive_acc
             accuracy_list.append(acc_comp)
 
             if model_name == 'rf':
-                feature_importances.append(model.feature_importances_)
+                feature_importances.append(model.feature_importances_.tolist())
 
             others = others_boolean
             if others == True:
@@ -187,7 +208,32 @@ for pitcher in args.input:
 
     # Random Forest
     clf = RandomForestClassifier(n_estimators = 100, random_state = 1)
-    rf_comp, vol, train_size, u_pitches, fe = prediction(model = clf, others_boolean = True)
+    rf_comp, vol, train_size, u_pitches, fi = prediction(model = clf, others_boolean = True)
+
+    feature_importance_df = pd.DataFrame(fi, columns = cols)
+    mean_fi = np.mean(feature_importance_df, axis = 0).values
+
+    pitcher_fi = []
+    i = 0
+    while i < len(mean_fi):
+        for col in dummys_idx_dict:
+            idx_list = dummys_idx_dict[col]
+            not_in_list = True
+            if i in idx_list:
+                not_in_list = False
+                if i == idx_list[0]:
+                    sum_ = 0
+                    for j in idx_list:
+                        sum_ += mean_fi[j]
+                    pitcher_fi.append(sum_)
+                i += 1
+                break
+
+        if not_in_list == True:
+            pitcher_fi.append(mean_fi[i])
+            i += 1
+
+    feature_importance_list.append(pitcher_fi)
 
     # SVM - radial basis function
     #clf = OneVsOneClassifier(svm.SVC(kernel = 'rbf', class_weight = 'balanced'))
@@ -198,11 +244,12 @@ for pitcher in args.input:
     
     final_df = pd.concat([final_df, temp], ignore_index = True)
 
-    print(fe)
-
 print(final_df)
 final_df.to_csv('test.csv', index = False)
-  
+fi_df = pd.DataFrame(feature_importance_list, columns = fi_cols)
+print(fi_df)
+fi_df.to_csv('feature_importance_all.csv', index = False)
+
 #    # AdaBoost
 #    clf = AdaBoostClassifier(base_estimator = RandomForestClassifier(n_estimators = 1), n_estimators = 200, random_state = 1)
 #    clf.fit(X_train, y_train.values)
