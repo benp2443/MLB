@@ -333,14 +333,17 @@ df['train_test'] = df['year'].map(data_split)
 df['prior_py'].replace(np.inf, np.nan, inplace = True)
 df['prior_px'].replace(np.inf, np.nan, inplace = True)
 df['prior_pitch'].replace('', np.nan, inplace = True)
+df['prior_speed'].replace(np.inf, np.nan, inplace = True)
 
 mean_px = df.loc[df['train_test'] == 'train', 'prior_px'].mean()
 mean_py = df.loc[df['train_test'] == 'train', 'prior_py'].mean()
 mode_type = df.loc[df['train_test'] == 'train', 'prior_pitch'].mode()[0]
+mean_speed = df.loc[df['train_test'] == 'train', 'prior_speed'].mean()
 
 df['prior_py'].replace(np.nan, mean_py, inplace = True)
 df['prior_px'].replace(np.nan, mean_px, inplace = True)
 df['prior_pitch'].replace(np.nan, mode_type, inplace = True)
+df['prior_speed'].replace(np.nan, mean_speed, inplace = True)
 
 columns = df.columns.values.tolist()
 

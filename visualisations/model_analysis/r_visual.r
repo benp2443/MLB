@@ -51,5 +51,6 @@ df <- read.csv('average_over_probs.csv')
 df$Probability = as.factor(df$Probability)
 
 ggplot(df, aes(x = Probability, y = Correct)) +
-    geom_boxplot()
+    geom_boxplot() +
+    scale_y_continuous(breaks = c(10,20,30,40,50,60,70,80,90))
 ggsave('test.pdf')
