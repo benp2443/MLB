@@ -26,13 +26,30 @@ library('ggplot2')
 #       geom_boxplot()
 #ggsave('s_vs_r.pdf')
 
-df <- read.csv('../../feature_importance_ordered.csv')
+#df <- read.csv('../../feature_importance_ordered.csv')
 
+#ggplot(df, aes(x = variable,  y = value)) +
+#	geom_boxplot() +
+#	scale_x_discrete(limits = unique(df$variable)) + 
+#	theme(axis.text.x = element_text(angle = 90))
+#ggsave('fi_boxplot.pdf')
 
-ggplot(df, aes(x = variable,  y = value)) +
-	geom_boxplot() +
-	scale_x_discrete(limits = unique(df$variable)) + 
-	theme(axis.text.x = element_text(angle = 90))
-ggsave('fi_boxplot.pdf')
+df <- read.csv('count_accuracy.csv')
 
+order <- c('count_0-2','count_1-2','count_0-1','count_2-2','count_1-1','count_0-0', 'count_2-1','count_1-0','count_3-2','count_2-0','count_3-1','count_3-0')
 
+ggplot(df, aes(x = variable, y = value)) +
+    geom_boxplot() +
+    scale_x_discrete(limits = order) +
+    theme(axis.text.x = element_text(angle = 90))
+ggsave('count_accuracy.pdf')
+
+##### Probabilities #####
+
+df <- read.csv('average_over_probs.csv')
+
+df$Probability = as.factor(df$Probability)
+
+ggplot(df, aes(x = Probability, y = Correct)) +
+    geom_boxplot()
+ggsave('test.pdf')

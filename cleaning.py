@@ -4,7 +4,7 @@ import sys
 
 pd.set_option('max.rows', 500)
 
-df = pd.read_csv('mlb_gb_full.csv')
+df = pd.read_csv('mlb_gd_full.csv')
 
 ##### Filter pitchers #####
 
@@ -205,21 +205,23 @@ sys.stdout.flush()
 df['prior_pitch'] = ''
 df['prior_px'] = np.inf
 df['prior_py'] = np.inf
-#df['prior_result'] = ''
+df['prior_speed'] = np.inf
 
 game_col = column_idx(df, 'game_id')
 prior_pitch_col = column_idx(df, 'prior_pitch')
 prior_x_loc_col = column_idx(df, 'prior_px')
 prior_y_loc_col = column_idx(df, 'prior_py')
+prior_pitch_speed_col = column_idx(df, 'prior_speed')
 ab_col = column_idx(df, 'ab_game_num')
 pitch_col = column_idx(df, 'pitch_type')
 x_loc_col = column_idx(df, 'px')
 y_loc_col = column_idx(df, 'py')
-#prior_result_col = column_idx(df, 'prior_result')
+speed_col = column_idx(df, 'start_speed')
 
 last_pitch = ''
 last_x_loc = np.inf 
 last_y_loc = np.inf
+last_speed = np.inf
 last_game = df.iat[0, game_col]
 last_ab = df.iat[0, ab_col]
 
@@ -233,6 +235,7 @@ while i < len(df):
         last_pitch = ''
         last_x_loc = np.inf
         last_y_loc = np.inf
+        last_speed = np.inf
         last_ab = ab
         last_game = game
         continue
@@ -240,10 +243,12 @@ while i < len(df):
     df.iat[i, prior_pitch_col] = last_pitch 
     df.iat[i, prior_x_loc_col] = last_x_loc
     df.iat[i, prior_y_loc_col] = last_y_loc
+    df.iat[i, prior_pitch_speed_col] = last_speed
 
     last_pitch = df.iat[i, pitch_col]
     last_x_loc = df.iat[i, x_loc_col]
     last_y_loc = df.iat[i, y_loc_col]
+    last_speed = df.iat[i, speed_col]
 
     last_ab = ab
     last_game = game
