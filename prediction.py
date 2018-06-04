@@ -35,7 +35,7 @@ for pitcher in args.input:
     sys.stdout.flush()
     df = pd.read_csv(pitcher)
     pitcher = df['pitcher_id'].unique()[0]
-    s_or_r = 'Starter' #df['StartVsRelief'].unique()[0]
+    s_or_r = df['StartVsRelief'].unique()[0]
 
     ## Create train_test column -> put this in feature eng
     df = df.loc[df['year'] != 2014, :]
@@ -57,12 +57,11 @@ for pitcher in args.input:
     drop = ['Unnamed: 0', 'game_id', 'game_type', 'home_team', 'home_league', \
             'away_team', 'away_league', 'stadium', 'city', 'inning', 'inning_half', \
             'ab_game_num', 'batter_id', 'pitcher_id', 'ab_event_number', 'ab_event', \
-            'p_description', 'type_', 'event_num', \
+            'p_description', 'type_', 'event_num', 'game_shift', 'StartVsRelief', 'new_game',\
             'start_speed', 'sz_top', 'sz_bot', 'pfx_x', 'pfx_y', 'px', 'py', 'year',\
-            'pitch_type', 'type_confidence', 'zone',\
-            'pitch_sequence', 'outs', 'batter_specific_count', 'prior_pitch']
+            'pitch_type', 'type_confidence', 'zone', 'weighted_total_pitches',\
+            'pitch_sequence', 'outs', 'batter_specific_count', 'prior_pitch', 'prior_speed']
 
-            ## Fucked up merge 'game_shift', 'StartVsRelief', 'new_game', 'weighted_total_pitches'
     
     df.drop(drop, axis = 1, inplace = True)
     df.replace(np.inf, np.nan, inplace = True)
@@ -280,30 +279,31 @@ for pitcher in args.input:
     clf = RandomForestClassifier(n_estimators = 100, random_state = 1)
     rf_comp, vol, train_size, u_pitches, fi, player_count_acc, count_values, player_pred_prob_array = prediction(model = clf, others_boolean = True)
 
-    #feature_importance_df = pd.DataFrame(fi, columns = cols)
-    #mean_fi = np.mean(feature_importance_df, axis = 0).values
-#
-#    pitcher_fi = []
-#    i = 0
-#    while i < len(mean_fi):
-#        for col in dummys_idx_dict:
-#            idx_list = dummys_idx_dict[col]
-#            not_in_list = True
-#            if i in idx_list:
-#                not_in_list = False
-#                if i == idx_list[0]:
-#                    sum_ = 0
-#                    for j in idx_list:
-#                        sum_ += mean_fi[j]
-#                    pitcher_fi.append(sum_)
-#                i += 1
-#                break
-#
-#        if not_in_list == True:
-#            pitcher_fi.append(mean_fi[i])
-#            i += 1
-#
-#    feature_importance_list.append(pitcher_fi)
+    feature_importance_df = pd.DataFrame(fi, columns = cols)
+    mean_fi = np.mean(feature_importance_df, axis = 0).values
+
+    pitcher_fi = []
+    i = 0
+    while i < len(mean_fi):
+        for col in dummys_idx_dict:
+            idx_list = dummys_idx_dict[col]
+            not_in_list = True
+            if i in idx_list:
+                not_in_list = False
+                if i == idx_list[0]:
+                    sum_ = 0
+                    for j in idx_list:
+                        sum_ += mean_fi[j]
+                    pitcher_fi.append(sum_)
+                i += 1
+                break
+
+        if not_in_list == True:
+            pitcher_fi.append(mean_fi[i])
+            i += 1
+
+    print(len(pitcher_fi))
+    feature_importance_list.append(pitcher_fi)
     count_accuracy_all.append(player_count_acc)
 
     # Proabilities and correct predictions append
@@ -318,7 +318,20 @@ for pitcher in args.input:
     
     final_df = pd.concat([final_df, temp], ignore_index = True)
 
-final_df.to_csv('test.csv', index = False)
+
+print(final_df)
+players_ids = pd.read_csv('players.csv')
+people_info = pd.read_csv('ids/people.csv')
+
+players_ids = players_ids[['key_mlbam', 'name_first', 'name_last']]
+people_info = people_info[['name_first', 'name_last', 'birth_year']]
+
+final_df = pd.merge(left = final_df, right = players_ids, left_on = 'pitcher_id', right_on = 'key_mlbam', how = 'inner')
+final_df = pd.merge(left = final_df, right = people_info, on = ['name_first', 'name_last'], how = 'left')
+
+print(final_df)
+
+final_df.to_csv('results.csv', index = False)
 fi_df = pd.DataFrame(feature_importance_list, columns = fi_cols)
 fi_df.to_csv('feature_importance_all.csv', index = False)
 
@@ -327,7 +340,6 @@ count_accuracy_df.to_csv('count_accuracy.csv', index = False)
 print(count_accuracy_df)
 
 prob_pred_df = pd.DataFrame(all_prob_pred_array, columns = ['Pitcher', 'Prediction Probability', 'Correct Prediction'])
-print(prob_pred_df)
 prob_pred_df.to_csv('prob_pred.csv', index = False)
 
 #    # AdaBoost

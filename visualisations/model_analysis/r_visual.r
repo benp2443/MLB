@@ -54,3 +54,11 @@ ggplot(df, aes(x = Probability, y = Correct)) +
     geom_boxplot() +
     scale_y_continuous(breaks = c(10,20,30,40,50,60,70,80,90))
 ggsave('test.pdf')
+
+##### Left vs Right #####
+
+df <- read.csv('../../left_vs_right_freqs.csv')
+
+ggplot(df, aes(x = difference)) +
+    geom_density()
+ggsave('left_vs_right_diff.pdf')

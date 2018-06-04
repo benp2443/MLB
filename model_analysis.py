@@ -57,18 +57,18 @@ args = parser.parse_args()
 #
 #df.to_csv('visualisations/model_analysis/test.csv')
 #
-#df = pd.read_csv('feature_importance_all.csv')
-#print(df.head())
-#print(df.shape)
-#
-#median_list = np.median(df, axis = 0) #.sort_values(ascending = False)
-#print(median_list)
-#median_series = pd.Series(median_list, df.columns.values).sort_values(ascending = False)
-#print(median_series)
-#df = df[median_series.index.tolist()]
-#
-#df = df.melt()
-#df.to_csv('feature_importance_ordered.csv', index = False)
+df = pd.read_csv('feature_importance_all.csv')
+print(df.head())
+print(df.shape)
+
+median_list = np.median(df, axis = -1).sort_values(ascending = False)
+print(median_list)
+median_series = pd.Series(median_list, df.columns.values).sort_values(ascending = False)
+print(median_series)
+df = df[median_series.index.tolist()]
+
+df = df.melt()
+df.to_csv('feature_importance_ordered.csv', index = False)
 
 
 ##### Count Accuracy #####

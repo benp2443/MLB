@@ -6,7 +6,7 @@ import sys
 pd.set_option('display.max_columns', 20)
 pd.set_option('display.max_rows', 300)
 
-parser = argparse.ArgumentParser()
+parser = argparse.argumentparser()
 parser.add_argument('--input', nargs = '+', help = 'input data path')
 args = parser.parse_args()
 
