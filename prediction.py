@@ -23,7 +23,8 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--input', nargs = '+', help = 'input data path')
 args = parser.parse_args()
 
-final_df = pd.DataFrame(columns = ['pitcher_id', 'rf', 'pitch_vol', 'ave_conf', 'sd_conf', 'train_size', 'unique_pitches', 'start_relief'])
+final_df = pd.DataFrame(columns = ['pitcher_id', 'rf', 'rf_std_accuracy', 'svm', 'svm_std_accuracy','pitch_vol', 'ave_conf', 'train_size', \
+                                   'unique_pitches', 'start_relief'])
 feature_importance_list = []
 count_accuracy_all = []
 all_prob_pred_array = np.empty([0,3])
@@ -201,7 +202,7 @@ for pitcher in args.input:
 
         return grouped_m_final
 
-    def prediction(model, others_boolean, model_name = 'rf', kfold_object = kf, X_array = X_train, y_array = y_train, naive_pred = most_freq):
+    def prediction(model, model_name, kfold_object = kf, X_array = X_train, y_array = y_train, naive_pred = most_freq, count_cols = cols_for_count_accuracy):
         accuracy_list = []
         vol_list = []
         train_size_list = []
@@ -211,41 +212,49 @@ for pitcher in args.input:
         player_prob_pred_array = np.empty([0,3])
 
         for train_index, test_index in kf.split(X_train):
+
+            # Create X,y training and validation arrays
             X_training = X_train[train_index, :]
             y_training = y_train.values[train_index]
 
             X_val = X_train[test_index, :]
             y_val = y_train.values[test_index]
 
-            naive_preds = np.repeat(naive_pred, X_val.shape[0])
-            naive_acc = np.sum(naive_preds == y_val)/float(len(y_val))
+            pred_length = len(y_val)
 
+            # Create prediction vector of validation set size with only null pitch type then find accuracy
+            naive_preds = np.repeat(naive_pred, X_val.shape[0])
+            naive_acc = np.sum(naive_preds == y_val)/float(pred_length)
+
+            # Fit model and make predictions
             model.fit(X_training, y_training)
             preds = model.predict(X_val)
-            preds_proba = model.predict_proba(X_val)
-            pred_prob = np.amax(preds_proba, axis = 1)
-            pred_prob = pred_prob.reshape(len(pred_prob), 1)
-            
-            
+
+            # Vector of T/F comparing predictions to actual pitch type 
             correct_pred = preds == y_val
-            correct_pred = correct_pred.reshape(len(pred_prob), 1)
+            correct_pred = correct_pred.reshape(pred_length, 1)
+            
+            # For Random Forest model, find prediction probability and store in array
+            if model_name == 'rf':
+                preds_proba = model.predict_proba(X_val)
+                pred_prob = np.amax(preds_proba, axis = 1) # Stores the prediction probability of the predicted class 
+                pred_prob = pred_prob.reshape(pred_length, 1)
+            
+                pitcher_array = np.repeat(pitcher, pred_length).reshape(pred_length, 1)
+            
+                # Join pitcher, prediction probability and T/F prediction arrays
+                join_prob_pred = np.concatenate([pitcher_array, pred_prob, correct_pred], axis = 1)
+                player_prob_pred_array = np.concatenate([player_prob_pred_array, join_prob_pred], axis = 0)
 
-            pitcher_array = np.repeat(pitcher, len(pred_prob)).reshape(len(pred_prob), 1)
-
-            join_prob_pred = np.concatenate([pitcher_array, pred_prob, correct_pred], axis = 1)
-            player_prob_pred_array = np.concatenate([player_prob_pred_array, join_prob_pred], axis = 0)
-
+            # Find accuracy of predictions then compute difference to naive accuracy
             acc = accuracy(preds, y_val)
             acc_comp = acc - naive_acc
             accuracy_list.append(acc_comp)
 
-            
-
             if model_name == 'rf':
                 feature_importances.append(model.feature_importances_.tolist())
 
-            others = others_boolean
-            if others == True:
+            if model_name == 'rf': # These variables are the same between models, hence only calculate once.
                 vol = pitch_volatility(y_training, y_val)
                 vol_list.append(vol)
 
@@ -265,19 +274,20 @@ for pitcher in args.input:
             merged_count = pd.merge(left = count_df_, right = grouped_m_final, how = 'left', left_on = 'count', right_on = 'variable')
             merged_count['mean'].fillna(-1, inplace = True)
             count_accuracy_player.append(merged_count['mean'].values.tolist())
-            count_values = merged_count['count']
+            count_values = merged_count['count'].values.tolist()
 
 
-        if others == True:
+        if model_name == 'rf':
             return np.mean(accuracy_list), np.mean(vol_list), np.mean(train_size_list), np.mean(number_pitches_list), feature_importances, \
-                   np.mean(count_accuracy_player, axis = 0), count_values, player_prob_pred_array
+                   np.mean(count_accuracy_player, axis = 0), count_values, player_prob_pred_array, np.std(accuracy_list)
         else:
-            return np.mean(accuracy_list)
+            return np.mean(accuracy_list),  np.mean(count_accuracy_player, axis = 0), np.std(accuracy_list)
+
            
 
     # Random Forest
     clf = RandomForestClassifier(n_estimators = 100, random_state = 1)
-    rf_comp, vol, train_size, u_pitches, fi, player_count_acc, count_values, player_pred_prob_array = prediction(model = clf, others_boolean = True)
+    rf_comp, vol, train_size, u_pitches, fi, rf_player_count_acc, count_values, player_pred_prob_array, accuracy_std = prediction(model = clf, model_name = 'rf')
 
     feature_importance_df = pd.DataFrame(fi, columns = cols)
     mean_fi = np.mean(feature_importance_df, axis = 0).values
@@ -302,19 +312,29 @@ for pitcher in args.input:
             pitcher_fi.append(mean_fi[i])
             i += 1
 
-    print(len(pitcher_fi))
     feature_importance_list.append(pitcher_fi)
-    count_accuracy_all.append(player_count_acc)
 
-    # Proabilities and correct predictions append
+    # Append count accuracy results for rf
+    print(rf_player_count_acc)
+    print(type(rf_player_count_acc))
+    print(pitcher)
+    count_data = [pitcher, 'rf'] + rf_player_count_acc.tolist()
+    count_accuracy_all.append(count_data)
+
+    # Probabilities and correct predictions append
     all_prob_pred_array = np.concatenate([all_prob_pred_array, player_pred_prob_array], axis = 0)
 
     # SVM - radial basis function
-    #clf = OneVsOneClassifier(svm.SVC(kernel = 'rbf', class_weight = 'balanced'))
-    #svm2_comp = prediction(model = clf, others_boolean = False)
+    clf = OneVsOneClassifier(svm.SVC(kernel = 'rbf', class_weight = 'balanced'))
+    svm_comp, svm_player_count_acc, svm_accuracy_std = prediction(model = clf, model_name = 'svm')
 
-    temp = pd.DataFrame([[pitcher, rf_comp, vol, ave_confidence, sd_confidence, train_size, u_pitches, s_or_r]], \
-                         columns = ['pitcher_id', 'rf', 'pitch_vol', 'ave_conf', 'sd_conf', 'train_size', 'unique_pitches', 'start_relief'])
+    # Append count accuracy results for svm
+    count_data = [pitcher, 'svm'] + svm_player_count_acc.tolist()
+    count_accuracy_all.append(count_data)
+
+    temp = pd.DataFrame([[pitcher, rf_comp, accuracy_std, svm_comp, svm_accuracy_std, vol, ave_confidence, train_size, u_pitches, s_or_r]], \
+                         columns = ['pitcher_id', 'rf', 'rf_std_accuracy', 'svm', 'svm_std_accuracy','pitch_vol', 'ave_conf', 'train_size', \
+                                    'unique_pitches', 'start_relief'])
     
     final_df = pd.concat([final_df, temp], ignore_index = True)
 
@@ -327,7 +347,6 @@ players_ids = players_ids[['key_mlbam', 'name_first', 'name_last']]
 people_info = people_info[['name_first', 'name_last', 'birth_year']]
 
 final_df = pd.merge(left = final_df, right = players_ids, left_on = 'pitcher_id', right_on = 'key_mlbam', how = 'inner')
-final_df = pd.merge(left = final_df, right = people_info, on = ['name_first', 'name_last'], how = 'left')
 
 print(final_df)
 
@@ -335,7 +354,8 @@ final_df.to_csv('results.csv', index = False)
 fi_df = pd.DataFrame(feature_importance_list, columns = fi_cols)
 fi_df.to_csv('feature_importance_all.csv', index = False)
 
-count_accuracy_df = pd.DataFrame(count_accuracy_all, columns = count_values)
+count_acc_cols = ['pitcher', 'model'] + count_values
+count_accuracy_df = pd.DataFrame(count_accuracy_all, columns = count_acc_cols)
 count_accuracy_df.to_csv('count_accuracy.csv', index = False)
 print(count_accuracy_df)
 

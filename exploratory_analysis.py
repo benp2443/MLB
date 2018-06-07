@@ -16,6 +16,7 @@ games_played = []
 ppg_df = pd.DataFrame([], columns = ['count', 'StarterVsCloser'])
 left_count = 0
 right_count = 0
+pitch_types_count_dict = {}
 
 for pitcher in args.input:
     df = pd.read_csv(pitcher)
@@ -33,7 +34,8 @@ for pitcher in args.input:
         team_counts[team] = 1
 
     # Number of pitch types
-    pitches = len(df['group_pitch_type'].unique())
+    unique_pitch_types = df['group_pitch_type'].unique()
+    pitches = len(unique_pitch_types)
     p_type = df.loc[0, 'StartVsRelief']
     number_of_pitch_types.append([pitches, p_type]) 
 
@@ -55,6 +57,14 @@ for pitcher in args.input:
     else:
         left_count += 1
 
+    # Pitch types
+    for pitch_type in unique_pitch_types:
+        print(pitch_type)
+        if pitch_type in pitch_types_count_dict:
+            pitch_types_count_dict[pitch_type] += 1
+        else:
+            pitch_types_count_dict[pitch_type] = 1
+
 
 
 teams_list = []
@@ -63,25 +73,33 @@ for key, value in team_counts.items():
     teams_list.append(temp)
     
 df = pd.DataFrame(teams_list, columns = ['team', 'count'])
-print('teams')
-print(df, '\n')
+#print('teams')
+#print(df, '\n')
 df.to_csv('visualisations/exploratory_analysis/teams.csv', index = False)
 
 pitch_types_count = pd.DataFrame(number_of_pitch_types, columns = ['count', 'StarterVsCloser'])
-print('number of pitch types')
-print(pitch_types_count, '\n')
+#print('number of pitch types')
+#print(pitch_types_count, '\n')
 pitch_types_count.to_csv('visualisations/exploratory_analysis/pitch_type_counts.csv', index = False)
 
 ppg_df.reset_index(drop = True, inplace = True)
-print('pitches per game')
-print(ppg_df)
+#print('pitches per game')
+#print(ppg_df)
 ppg_df.to_csv('visualisations/exploratory_analysis/pitches_per_game.csv', index = False)
 
 hand_df = pd.DataFrame([['Right', right_count],['Left', left_count]], columns = ['hand', 'count'])
-print(hand_df)
+#print(hand_df)
 hand_df.to_csv('visualisations/exploratory_analysis/handedness.csv', index = False)
 
 gp_df = pd.DataFrame(games_played, columns = ['count', 'StarterVsCloser'])
-print(gp_df)
+#print(gp_df)
 gp_df.to_csv('visualisations/exploratory_analysis/games_played.csv', index = False)
 
+pitch_type_list = []
+for key, value in pitch_types_count_dict.items():
+    temp = [key, value]
+    pitch_type_list.append(temp)
+
+type_df = pd.DataFrame(pitch_type_list, columns = ['Pitch_Type', 'Count'])
+type_df = type_df.loc[~type_df['Pitch_Type'].isnull(), :]
+type_df.to_csv('visualisations/exploratory_analysis/pitch_types.csv', index = False)

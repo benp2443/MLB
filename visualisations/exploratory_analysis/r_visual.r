@@ -43,3 +43,15 @@ ggplot(df, aes(x = team, y = count)) +
     theme(axis.text.x = element_text(angle = 90)) +
     labs(x = 'Team', y = 'Count', title = 'Pitchers Per Team')
 ggsave('teams.pdf')
+
+##### Pitch Types Count #####
+df <- read.csv('pitch_types.csv')
+sorted_df <- df[order(-df$Count), ]
+positions = sorted_df$Pitch_Type
+
+ggplot(df, aes(x = Pitch_Type, y = Count)) +
+    geom_bar(stat = 'identity', fill = 'steelblue4', width = 0.85) +
+    scale_x_discrete(limits = positions) +
+    theme(axis.text.x = element_text(angle = 90)) +
+    labs(x = 'Grouped Pitch Type', y = 'Count', title = 'Grouped Pitch Type Count')
+ggsave('grouped_pitch_types_count.pdf')
