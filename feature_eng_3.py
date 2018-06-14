@@ -5,9 +5,9 @@ import sys
 
 pd.set_option('max.rows', 500)
 
-df = pd.read_csv('individual_df/fe/279571_fe.csv')
+df = pd.read_csv('individual_df/279571.csv')
 
- # hand difference
+# hand difference
 def same_hand(row):
     if row['p_handedness'] == row['b_handedness']:
         return 1
@@ -40,6 +40,7 @@ for pitch_type in u_pitches:
     df.loc[0, weighted_name] = 0
 
 # loop through df, updating prior cols and weighted cols, window cols
+runs_allowed = 0
 i = 0
 while i < len(df) - 1:
     pitch_type = df.loc[i, 'group_pitch_type']
@@ -213,9 +214,44 @@ print(df[['e_w_360_SL_percent', 'global_prior_SL_to_batter', 'batter_specific_co
 df.drop(prior_columns, axis = 1, inplace = True)
 df.drop(batter_specific_cols, axis = 1, inplace = True)
 df.drop(['total_pitches'], axis = 1, inplace = True)
- 
-print(df.columns.values)
-aa
+
+
+game_idx = df.columns.values.tolist().index('game_id')
+
+# Create column with opposition teams score
+def score_diff(row):
+    if row['inning_half'] == 'top':
+        return row['away_runs']
+    else:
+        return row['home_runs']
+    
+df['opp_score'] = df.apply(score_diff, axis = 1)
+df['runs_allowed'] = 0
+
+opp_score_idx = df.columns.values.tolist().index('opp_score')
+runs_allowed = []
+
+start_score = df.iat[0, game_idx]
+current_game = df.iat[0, game_idx]
+
+i = 0
+while i < len(df):
+    game = df.iat[i, game_idx]
+
+    if game != current_game:
+        start_score = df.iat[i, opp_score_idx]
+        current_game = game
+        continue
+
+    opp_runs = df.iat[i, opp_score_idx]
+    ra = opp_runs - start_score
+    runs_allowed.append(ra)
+
+    i += 1
+
+df['runs_allowed'] = runs_allowed
+
+
 #### Line chart wrangling
 
 #temp = df.loc[df['year'] != 2014, ['game_id', 'global_prior_SL_percent', 'global_prior_FF_percent', \

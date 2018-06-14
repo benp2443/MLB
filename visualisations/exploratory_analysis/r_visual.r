@@ -1,5 +1,16 @@
 library('ggplot2')
 
+df <- read.csv('count_pitches_to_batter.csv')
+
+ggplot(df, aes(x = count)) +
+    geom_density(fill = 'steelblue4') +
+    labs(x = 'Count', y = 'Density', title = 'Pitches thrown to individual batter')
+ggsave('count_to_batter.pdf')
+
+print(median(df[['count']]))
+aa
+
+
 ##### Left vs Right #####
 df <- read.csv('handedness.csv')
 

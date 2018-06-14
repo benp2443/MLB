@@ -42,11 +42,14 @@ library('ggplot2')
 #    geom_line(aes(color = pitch_type))
 #ggsave('test2.pdf')
 #
-#df7 <- read.csv('volatility.csv')
-#
-#ggplot(df7, aes(x = change_value)) +
-#    geom_density(fill = 'steelblue')
-#ggsave('pitcher_volatility.pdf')
+df7 <- read.csv('volatility.csv')
+
+ggplot(df7, aes(x = change_value)) +
+    geom_density(fill = 'steelblue4') + 
+    labs(x = 'Difference', y = 'Density', title = 'Change in Pitch Type Frequency')
+ggsave('pitcher_volatility.pdf')
+
+print(median(df7[ , 'change_value']))
 #
 #df8 <- read.csv('top_vol.csv')
 #
@@ -66,21 +69,18 @@ library('ggplot2')
 #    facet_grid(pitcher_id ~ .)
 #ggsave('test.pdf')
 
-#df9 <- read.csv('pitch_frequencies_change.csv')
+#df9 <- read.csv('pitch_frequencies_weighted.csv')
 #
-#ggplot(df9, aes(x = game_id, y = value, group = variable)) +
+#ggplot(df9, aes(x = pitch_count, y = value, group = variable)) +
+#    geom_line(aes(color = variable)) +
+#    theme(axis.ticks.x = element_blank()) +
+#    labs(x = 'Pitch Count', y = 'Percent', title = 'Watson - Historic Pitch Frequency vs Weighted Pitch Frequency', color = '')
+#ggsave('test2.pdf')
+#
+#df10 <- read.csv('pitch_frequencies_windows.csv')
+#
+#ggplot(df10, aes(x = pitch_count, y = value, group = variable)) +
 #    geom_line(aes(color = variable)) +
 #    theme(axis.ticks.x = element_blank(),
 #          axis.text.x = element_blank())
-#ggsave('test2.pdf')
-
-df10 <- read.csv('pitch_frequencies_windows.csv')
-
-curve <- c('w_40_CU_percent', 'w_120_CU_percent', 'w_360_CU_percent')
-temp <- df10[df10$variable %in% curve, ]
-
-ggplot(temp, aes(x = game_id, y = value, group = variable)) +
-    geom_line(aes(color = variable)) +
-    theme(axis.ticks.x = element_blank(),
-          axis.text.x = element_blank())
-ggsave('test3.pdf')
+#ggsave('test3.pdf')

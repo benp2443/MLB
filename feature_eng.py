@@ -6,9 +6,40 @@ import sys
 pd.set_option('display.max_columns', 20)
 pd.set_option('display.max_rows', 300)
 
-parser = argparse.argumentparser()
+parser = argparse.ArgumentParser()
 parser.add_argument('--input', nargs = '+', help = 'input data path')
 args = parser.parse_args()
+
+# Import batting data and create rate features 
+batting_df = pd.read_csv('batting_data.csv')
+batting_df['so_rate'] = np.round(batting_df['so']/batting_df['ab'],3)
+batting_df['bb_rate'] = np.round(batting_df['bb']/batting_df['ab'],3)
+
+# Import data which includes player names and mlbam id
+names_df = pd.read_csv('players.csv')
+names_df = names_df[['name_first', 'name_last', 'key_mlbam']]
+
+# Drop observations where players played for more than one team in one season to only one team -> recollect data
+# With hits, 2b, 3b, homers so these rows can be joined to find season aggregate.
+batting_df = batting_df.drop_duplicates(['year', 'name_first', 'name_last'])
+
+names_df['name_first'] = names_df['name_first'].astype(str)
+names_df['name_last'] = names_df['name_last'].astype(str)
+
+# Different convention in naming players between batting and names. Remove Space between names like J. R.
+def replace_space(x):
+    if x[1] == '.':
+        return x.replace(' ', '')
+    else:
+        return x
+
+names_df['name_first'] = names_df['name_first'].apply(replace_space)
+
+# Merge batting df and names_df -> this data can now be merged with the base dataset on the mlbam id
+final_batting = batting_df.merge(names_df, how = 'inner', on = ['name_first', 'name_last'])
+
+
+
 
 for pitcher in args.input:
     print(pitcher)
@@ -36,8 +67,6 @@ for pitcher in args.input:
     
     df['score_diff'] = df.apply(score_diff, axis = 1)
 
-    drop = ['home_runs', 'away_runs']
-    df.drop(drop, axis = 1, inplace = True)
    
     # hand difference
     def same_hand(row):
@@ -58,6 +87,9 @@ for pitcher in args.input:
     prior_columns = []
     weighted_count_dict = {}
     weighted_cols = []
+    same_hand_pitch_count_dict = {}
+    diff_hand_pitch_count_dict = {}
+    hand_cols = []
     
     for pitch_type in u_pitches:
         col_name = 'global_prior_' + pitch_type
@@ -72,17 +104,43 @@ for pitcher in args.input:
         df[weighted_name] = np.nan
         df.loc[0, weighted_name] = 0
 
+        hand_name = col_name + '_hand'
+        hand_cols.append(hand_name)
+        same_hand_pitch_count_dict[hand_name] = 0
+        diff_hand_pitch_count_dict[hand_name] = 0
+        df[hand_name] = np.nan
+        df.loc[0, hand_name] = 0
+
+
     # loop through df, updating prior cols and weighted cols, window cols
     i = 0
+
     while i < len(df) - 1:
+
         pitch_type = df.loc[i, 'group_pitch_type']
         column_name = 'global_prior_' + pitch_type
         weighted_name = column_name + '_weighted'
+        hand_name = column_name + '_hand'
+                
         pitch_count_dict[pitch_type] += 1
         weighted_count_dict[weighted_name] += i + 1
+
         df.loc[i+1, column_name] = pitch_count_dict[pitch_type]
         df.loc[i+1, weighted_name] = weighted_count_dict[weighted_name]
-        
+
+        hand = df.loc[i, 'hand']
+        # Code rep -> Create a function!
+        if hand == 1:
+            for pitch_type in u_pitches:
+                hand_pitch = 'global_prior_' + pitch_type + '_hand'
+                df.loc[i, hand_pitch] = same_hand_pitch_count_dict[hand_pitch]
+            same_hand_pitch_count_dict[hand_name] += 1
+        else:
+            for pitch_type in u_pitches:
+                hand_pitch = 'global_prior_' + pitch_type + '_hand'
+                df.loc[i, hand_pitch] = diff_hand_pitch_count_dict[hand_pitch]
+            diff_hand_pitch_count_dict[hand_name] += 1
+
         i += 1
     
     # Forward fill null values in prior columns, backfill the 2014 values
@@ -96,6 +154,7 @@ for pitcher in args.input:
     
     df['total_pitches'] = df[prior_columns].sum(axis = 1)
     df['weighted_total_pitches'] = df[weighted_cols].sum(axis = 1)
+    df['hand_total_pitches'] = df[hand_cols].sum(axis = 1)
     
     # Create global percentage columns
     for col in prior_columns:
@@ -106,7 +165,10 @@ for pitcher in args.input:
         percent_col = 'b_' + weighted_col + '_percent'
         df[percent_col] = df[weighted_col]/df['weighted_total_pitches']
     
-    
+        hand_col_name = col + '_hand'
+        hand_percent_col = 'z_' + hand_col_name + '_percent'
+        df[hand_percent_col] = df[hand_col_name]/df['hand_total_pitches']
+
     ##### Pitch Frequencies in windows #####
     w_40 = np.array([])
     w_120 = np.array([])
@@ -238,9 +300,12 @@ for pitcher in args.input:
     
         weighted_col = 'f_' + column_name + '_weighted'
         df[weighted_col] = (df['batter_specific_count']*batter_prior + beta * hist_prior)/(df['batter_specific_count'] + beta)
+        df[weighted_col]fillna('bfill', inplace = True)
+        df[weighted_col].fillna('ffill', inplace = True)
     
     df.drop(prior_columns, axis = 1, inplace = True)
     df.drop(weighted_cols, axis = 1, inplace = True)
+    df.drop(hand_cols, axis = 1, inplace = True)
     df.drop(w_40_cols, axis = 1, inplace = True)
     df.drop(w_120_cols, axis = 1, inplace = True)
     df.drop(w_360_cols, axis = 1, inplace = True)
@@ -255,15 +320,60 @@ for pitcher in args.input:
     # Home or away
     def home_or_away(x):
         if x == 'top':
-            return 'Home'
+            return 1
         else:
-            return 'Away'
+            return 0
     
     df['home_or_away'] = df['inning_half'].apply(home_or_away)
+
+    game_idx = df.columns.values.tolist().index('game_id')
     
+    # Create column with opposition teams score
+    def score_diff(row):
+        if row['inning_half'] == 'top':
+            return row['away_runs']
+        else:
+            return row['home_runs']
+        
+    df['opp_score'] = df.apply(score_diff, axis = 1)
+    
+    opp_score_idx = df.columns.values.tolist().index('opp_score')
+    runs_allowed = []
+    
+    start_score = df.iat[0, opp_score_idx]
+    current_game = df.iat[0, game_idx]
+    
+    i = 0
+    while i < len(df):
+        game = df.iat[i, game_idx]
+    
+        if game != current_game:
+            start_score = df.iat[i, opp_score_idx]
+            current_game = game
+            continue
+    
+        opp_runs = df.iat[i, opp_score_idx]
+        ra = opp_runs - start_score
+        runs_allowed.append(ra)
+    
+        i += 1
+    
+    df['runs_allowed'] = runs_allowed
+    
+    drop = ['home_runs', 'away_runs', 'opp_score']
+    df.drop(drop, axis = 1, inplace = True)
+    
+    # Merge batter data into dataframe
+    df['batter_id'] = df['batter_id'].astype(float)
+    df = df.merge(final_batting, how = 'left', left_on = ['year', 'batter_id'], right_on = ['year', 'key_mlbam'])
+    drop = ['key_mlbam', 'name_first', 'name_last', 'so', 'bb', 'ab']
+    df.drop(drop, axis = 1, inplace = True)
+    
+    df[['so_rate', 'bb_rate', 'slg', 'obp']] = df[['so_rate', 'bb_rate', 'slg', 'obp']].fillna(np.mean, axis = 0)
+
+
     # Save dataframe as csv
     pitcher_num = df['pitcher_id'].unique()[0]
-    print(pitcher_num)
     sys.stdout.flush()
     variable_name = 'individual_df/' + str(pitcher_num) + '_fe.csv'
     df.to_csv(variable_name,index = False)

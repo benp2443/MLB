@@ -43,18 +43,10 @@ for pitcher in args.input:
     train_test = {2015:'train', 2016:'train', 2017:'test'}
     df['train_test'] = df['year'].map(train_test)
 
-    #df = df.loc[df['type_confidence'] >= 1.5, :]
-    #new_counts = df.groupby('year')['home_team'].count().reset_index()
-    #u_years = new_counts['year'].unique()
-
-    #if 2016 not in u_years or 2017 not in u_years:
-    #    cut_pitchers += 1
-    #    continue
-
     ave_confidence = np.mean(df.loc[df['train_test'] == 'train', 'type_confidence']/2)
     sd_confidence = np.std(df.loc[df['train_test'] == 'train', 'type_confidence']/2)
 
-    # Drop unwanted columns and 2014 -> make this cleaner through the pipeline
+    # Drop unwanted columns
     drop = ['Unnamed: 0', 'game_id', 'game_type', 'home_team', 'home_league', \
             'away_team', 'away_league', 'stadium', 'city', 'inning', 'inning_half', \
             'ab_game_num', 'batter_id', 'pitcher_id', 'ab_event_number', 'ab_event', \
@@ -66,6 +58,9 @@ for pitcher in args.input:
     
     df.drop(drop, axis = 1, inplace = True)
     df.replace(np.inf, np.nan, inplace = True)
+
+    print(df.info())
+    a
     df.fillna(method = 'ffill', inplace = True)
     df.fillna(method = 'bfill', inplace = True)
 
@@ -136,22 +131,34 @@ for pitcher in args.input:
         return np.sum(predictions == y_true)/float(len(y_true))
 
     def pitch_volatility(y_train_array, y_test_array):
-        y_train_fold = pd.DataFrame(y_train_array, columns = ['pitch_type'])
-        y_train_fold['count'] = 0
-        y_test_fold = pd.DataFrame(y_test_array, columns = ['pitch_type'])
-        y_test_fold['count'] = 0
 
-        y_train_counts = y_train_fold.groupby('pitch_type').count().reset_index()
-        y_test_counts = y_test_fold.groupby('pitch_type').count().reset_index()
+        temp2 = pd.DataFrame(y_train_array, columns = ['group_pitch_type'])
+        temp2['count_train'] = 0
+        temp3 = pd.DataFrame(y_test_array, columns = ['group_pitch_type'])
+        temp3['count_test'] = 0
 
-        y_train_counts['percent_train'] = y_train_counts['count']/np.sum(y_train_counts['count'])
-        y_test_counts['percent_test'] = y_test_counts['count']/np.sum(y_test_counts['count'])
-
-        merged_df = y_train_counts.merge(y_test_counts, how = 'outer', on = 'pitch_type')
+        # Group the df's above on the pitch type and use added column to sum the grouped counts
+        train_grouped = temp2.groupby('group_pitch_type').count().reset_index()
+        test_grouped = temp3.groupby('group_pitch_type').count().reset_index()
+        
+        # Merge df's on pitch type. Outer join so nulls occur where the same pitch type is not in both df's
+        merged_df = train_grouped.merge(test_grouped, how = 'outer', on = 'group_pitch_type')
+        merged_df.fillna(0.0, inplace = True) # Fill nulls with 0.0
+        
+        # Find length of each dataset
+        count_train = np.sum(merged_df['count_train'])
+        count_test = np.sum(merged_df['count_test'])
+        
+        # Find Percentage of each pitch type
+        merged_df['percent_train'] = merged_df['count_train']/count_train
+        merged_df['percent_test'] = merged_df['count_test']/count_test
+        
+        # Find square difference then the change
         merged_df['sq_diff'] = np.square(merged_df['percent_train'] - merged_df['percent_test'])
         change = np.sqrt(np.mean(merged_df['sq_diff']))
 
         return change
+
 
     def train_size(y_train_array):
         return len(y_train_array)
